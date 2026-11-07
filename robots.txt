@@ -1,7 +1,7 @@
 User-agent: *
 Allow: /
-Disallow: /LICO_PET_original/staff
-Disallow: /LICO_PET_original/cart.html
-Disallow: /LICO_PET_original/complete.html
+Disallow: /ittenmon/staff
+Disallow: /ittenmon/cart.html
+Disallow: /ittenmon/complete.html
 
-Sitemap: https://syurob-lico-fukuoka.github.io/LICO_PET_original/sitemap.xml
+Sitemap: https://syurob-lico-fukuoka.github.io/ittenmon/sitemap.xml
