@@ -406,8 +406,26 @@ async function call(fn, ...args){
     document.body.classList.remove("busy"); $("#reloadBtn")?.classList.remove("spin");
   }
 }
+/* 新しい注文が入ったら音声でお知らせ（「その他 → 音声のお知らせ」でON／OFF。端末ごとに覚える） */
+const soundOn = () => { try{ return localStorage.getItem("ittenmon-sound") !== "off"; }catch(_){ return true; } };
+function announce(n){
+  if(!soundOn()) return;
+  try{
+    const ac = announce.ac || (announce.ac = new (window.AudioContext || window.webkitAudioContext)());
+    [[880,0],[1320,.18]].forEach(([f,t]) => { const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = f; o.connect(g); g.connect(ac.destination);
+      g.gain.setValueAtTime(.0001, ac.currentTime + t); g.gain.exponentialRampToValueAtTime(.35, ac.currentTime + t + .02); g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + t + .35); o.start(ac.currentTime + t); o.stop(ac.currentTime + t + .4); });
+  }catch(_){}
+  try{
+    const u = new SpeechSynthesisUtterance(n > 1 ? `イッテンモンの注文が${n}件入りました` : "イッテンモンの注文が入りました");
+    u.lang = "ja-JP"; u.rate = 1; setTimeout(() => speechSynthesis.speak(u), 700);
+  }catch(_){}
+}
 function apply(r){
   try{ localStorage.setItem("ittenmon-staff","1"); }catch(_){}
+  // 前回の一覧になかった注文（決済待ちを除く）が増えたら鳴らす。最初の読み込みでは鳴らさない
+  const nos = new Set((r.orders || []).filter(o => o["状態"] !== "決済待ち" && o["状態"] !== "キャンセル").map(o => o["注文番号"]));
+  if(app.seen){ const fresh = [...nos].filter(n => !app.seen.has(n)); if(fresh.length){ announce(fresh.length); setTimeout(() => toast("新しい注文が " + fresh.length + " 件入りました"), 50); } }
+  app.seen = nos;
   app.role = r.role; app.cafeId = r.cafeId || ""; app.cafeName = r.cafeName || ""; app.orders = r.orders || [];
   app.payDay = r.payDay ?? 5; app.shopUrl = r.shopUrl || app.shopUrl; app.sheetUrl = r.sheetUrl || ""; app.loaded = Date.now();
   render();
@@ -661,6 +679,7 @@ function viewMore(){
     ["qr", "QRコード", "ネットショップ・各加盟店のQR（印刷用）", I.qr, "#0e7c6b"],
     ["link:shop", "お客様の注文画面", "ショップを開く", I.bag, "#b45309"],
     app.sheetUrl ? ["link:sheet", "注文データ", "スプレッドシートを開く", I.sheet, "#15803d"] : null,
+    ["sound", "音声のお知らせ：" + (soundOn() ? "ON" : "OFF"), "新しい注文が入ると「イッテンモンの注文が入りました」と読み上げる（押すと切り替え・ためしに鳴る）", I.bell || I.help, "#be185d"],
     ["install", "ホーム画面に追加", "アプリのように使う", I.device, "#6d28d9"],
     ["help", "使い方", "画面の見方と困ったとき", I.help, "#0891b2"],
     ["logout", "ログアウト", "この端末からパスコードを消す", I.out, "#64748b"]]
@@ -815,7 +834,8 @@ document.addEventListener("click", e => {
   if(t.dataset.store){ app.storeSel = t.dataset.store; app.filter = "all"; go("orders"); return; }
   if(t.dataset.clearStore!==undefined){ app.storeSel=""; render(); return; }
   if(t.dataset.period){ app.period = t.dataset.period; render(); return; }
-  if(t.dataset.more){ ({ stats:()=>go("stats"), qr:()=>go("qr"), install:openInstall, help:openHelp, logout:logout })[t.dataset.more]?.(); return; }
+  if(t.dataset.more){ ({ stats:()=>go("stats"), qr:()=>go("qr"), install:openInstall, help:openHelp, logout:logout,
+    sound:()=>{ const on = !soundOn(); try{ localStorage.setItem("ittenmon-sound", on ? "on" : "off"); }catch(_){} if(on) announce(1); toast(on ? "音声のお知らせをONにしました" : "音声のお知らせをOFFにしました"); render(); } })[t.dataset.more]?.(); return; }
   if(t.dataset.adv){ const no = t.dataset.adv, o = app.orders.find(x=>x["注文番号"]===no);
     if(!isLico() && !confirm(`${o?o["お名前"]+" 様の注文を":""}お渡し済みにしますか？`)) return;
     t.disabled = true; call("adminAdvance", no).then(r=>{ closeLayer(); apply(r); toast(isLico()?"次の工程へ進めました":"お渡し済みにしました"); }).catch(()=>{ t.disabled=false; }); return; }
