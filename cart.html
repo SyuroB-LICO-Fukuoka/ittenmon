@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/shop.css?v=1121b">
+<link rel="stylesheet" href="css/shop.css?v=1121c">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#ffffff">
 <link rel="apple-touch-icon" href="img/app/shop-180.png">
@@ -25,9 +25,9 @@
 </main>
 <div id="site-footer"></div>
 
-<script src="js/config.js?v=1120d"></script>
+<script src="js/config.js?v=1121c"></script>
 <script src="js/common.js?v=1107b"></script>
-<script src="js/chatbot.js?v=1120b" defer></script>
+<script src="js/chatbot.js?v=1121c" defer></script>
 <script>
 (() => {
   const {S, yen, esc, isCafe, cafeId, getCart, setCart, subtotal, shipping, api, toast, chrome, qs, product, unitPrice, optionText} = window.LICO;
@@ -102,6 +102,7 @@
           <p class="help" style="font-size:12.5px;line-height:1.7">できあがった作品の写真を、ITTENMONのギャラリーやSNSでご紹介してもよろしいですか？お名前・ご連絡先・ご住所は載せません。ご注文のあとでも、LINEかメールでご連絡いただければ、変更・取り下げができます。</p>
           <div class="radios"><label class="radio"><input type="radio" name="c-gal" value="ok" ${f.gallery==="ok"?"checked":""}><span><b>掲載してもよい</b><small>お名前を伏せて紹介します</small></span></label>
           <label class="radio"><input type="radio" name="c-gal" value="ng" ${f.gallery!=="ok"?"checked":""}><span><b>掲載しない</b><small>ご自分用としてだけ、おつくりします</small></span></label></div></div>
+        <div class="warnbox"><b>ご注文の前にご確認ください</b><span>ご注文後は、内容（写真・文字・機種・色・数量）を変更できません。内容をもう一度ご覧になってから、お進みください。</span></div>
         <label class="check"><input type="checkbox" id="c-agree" ${f.agree?"checked":""}> <span><a href="tokushoho.html" target="_blank" style="text-decoration:underline">特定商取引法に基づく表記</a>と<a href="tokushoho.html#privacy" target="_blank" style="text-decoration:underline">プライバシーポリシー</a>に同意します</span></label>
         <div id="msg"></div>
         <button class="btn btn-block" type="submit" id="go">${goLabel(free)}</button>

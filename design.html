@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Jost:wght@400;500;600&family=Zen+Maru+Gothic:wght@500;700&family=M+PLUS+Rounded+1c:wght@800&family=Noto+Serif+JP:wght@700&family=Shippori+Mincho:wght@600&family=Klee+One:wght@600&family=Yomogi&family=Kaisei+Decol:wght@700&family=Dancing+Script:wght@600&family=Great+Vibes&family=Pacifico&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/shop.css?v=1121b">
+<link rel="stylesheet" href="css/shop.css?v=1121c">
 <style>
 /* 編集画面：左に道具の切り替え、その隣に道具パネル、中央にケース */
 html,body{height:100%}
@@ -144,7 +144,7 @@ canvas#cv{touch-action:none;max-width:100%;max-height:calc(100vh - 200px);cursor
 </div>
 <div id="modalHost"></div>
 
-<script src="js/config.js?v=1120d"></script>
+<script src="js/config.js?v=1121c"></script>
 <script src="js/models.js?v=1017a"></script>
 <script src="js/common.js?v=1107b"></script>
 <script>
@@ -823,6 +823,7 @@ document.getElementById("confirmBtn").onclick = () => {
       <dt>文字</dt><dd>${st.texts.some(t => !t.stk) ? st.texts.filter(t => !t.stk).map(t => esc(t.text)).join("／") : "なし"}</dd><dt>スタンプ</dt><dd>${st.texts.filter(t => t.stk).length}個</dd><dt>写真</dt><dd>${st.photos.length}枚（${st.photos.map((_, i) => NUM(i)).join("")}）</dd><dt>背景透過</dt><dd>${cut ? "あり" : "なし"}</dd>
       <dt>金額</dt><dd><b>${yen(unit * qty)}</b>（税込）</dd></dl>
       <p class="help">画面の色と実際の仕上がりは少し異なることがあります。${PR.kind === "phone" ? "カメラの穴の部分は印刷されません。" : esc(PR.note || "")}</p>
+      <p class="warnline">ご注文後は、内容（写真・文字・機種・色・数量）を変更できません。</p>
       <div class="act"><button class="btn" type="button" id="toCart">この内容でカートに入れる</button><button class="btn btn-line" type="button" id="back">デザインを直す</button></div>
       <p class="state" id="mdState"></p></div></div></div>`;
   host.querySelector("#back").onclick = () => host.innerHTML = "";

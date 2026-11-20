@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/shop.css?v=1121b">
+<link rel="stylesheet" href="css/shop.css?v=1121c">
 <style>
 .p-main-img img{width:100%;height:100%;object-fit:cover}
 .points{list-style:none;display:flex;flex-direction:column;gap:8px;font-size:14px}
@@ -85,10 +85,10 @@
 <div id="site-footer"></div>
 <div id="sheetHost"></div>
 
-<script src="js/config.js?v=1120d"></script>
+<script src="js/config.js?v=1121c"></script>
 <script src="js/models.js?v=1017a"></script>
 <script src="js/common.js?v=1107b"></script>
-<script src="js/chatbot.js?v=1120b" defer></script>
+<script src="js/chatbot.js?v=1121c" defer></script>
 <script>
 (() => {
   const {S, yen, esc, chrome, qs, product, shapeIcon, toast} = window.LICO;
@@ -138,13 +138,13 @@
       <p class="p-lead">${esc(P.lead)}</p>
       ${P.size ? `<p class="size">サイズ：${esc(P.size)}</p>` : ""}
       <ul class="points">${(P.points || []).map(x => `<li>${esc(x)}</li>`).join("")}
-        <li>お名前やメッセージを入れられます（書体13種類・色100色以上）</li><li>できあがりイメージを確認してから注文できます</li></ul>
+        <li>テンプレートと背景から選んで、写真・お名前・メッセージを入れられます</li><li>できあがりイメージを確認してから注文できます</li></ul>
       <button class="big-btn" type="button" id="startBtn">デザインする</button>
       <p class="ship-note">${esc(S.shipNote)}</p>
       ${P.note ? `<p class="size">${esc(P.note)}</p>` : ""}
       <div class="flow3">
         <div><b>STEP 1</b>${P.optionLabel ? esc(P.optionLabel) + "と" : ""}数量を選ぶ</div>
-        <div><b>STEP 2</b>写真をアップロードして、位置や文字を決める</div>
+        <div><b>STEP 2</b>テンプレートと写真を選んで、文字を入れる</div>
         <div><b>STEP 3</b>できあがりを確認してカートへ</div>
       </div>
     </div>
@@ -185,14 +185,15 @@
     const go = () => { location.href = `design.html?product=${P.id}&opt=${encodeURIComponent(opt)}${cc ? "&cc=" + cc : ""}&qty=${qty}`; };
     const draw = () => {
       host.innerHTML = `<div class="pop-bg" id="popbg"><div class="pop" role="dialog" aria-label="選んだ内容の確認">
-        <p class="pop-k">選んだ${esc(P.optionLabel || "内容")}</p>
-        <div class="pop-ic">${shapeIcon(P.kind === "phone" ? "phone" : P.id, opt, 84, cc)}</div>
-        <h3>${esc(opt)}</h3>
+        <p class="pop-k">${P.kind === "none" ? "ご注文の内容" : "選んだ" + esc(P.optionLabel || "内容")}</p>
+        <div class="pop-ic">${P.kind === "none" ? `<img src="${esc((P.images || [])[0] || "")}" alt="" style="width:92px;height:92px;object-fit:cover;border-radius:10px">` : shapeIcon(P.kind === "phone" ? "phone" : P.id, opt, 84, cc)}</div>
+        <h3>${esc(P.kind === "none" ? P.short : opt)}</h3>
         ${cc ? `<p class="pop-s">ケースの色：${esc(ccLabel())}</p>` : ""}
         <div class="pop-q"><span>数量</span><button type="button" id="pqm" aria-label="1つ減らす">−</button><b id="pqn">${qty}</b><button type="button" id="pqp" aria-label="1つ増やす">＋</button></div>
         <p class="pop-t">合計（税込）<b>${yen(unit() * qty)}</b></p>
-        <button class="big-btn" type="button" id="pgo">この${esc(P.optionLabel || "内容")}でデザインに進む</button>
-        <button class="pop-re" type="button" id="pre">${esc(P.optionLabel || "内容")}を選び直す</button>
+        <p class="pop-w">ご注文後は、内容（写真・文字・機種・色・数量）を変更できません。</p>
+        <button class="big-btn" type="button" id="pgo">この${P.kind === "none" ? "内容" : esc(P.optionLabel || "内容")}でデザインに進む</button>
+        <button class="pop-re" type="button" id="pre">${P.kind === "none" ? "閉じる" : esc(P.optionLabel || "内容") + "を選び直す"}</button>
       </div></div>`;
       document.getElementById("pgo").onclick = go;
       document.getElementById("pre").onclick = () => { host.innerHTML = ""; };
@@ -204,6 +205,7 @@
     draw();
   }
   function open(){
+    if(P.kind === "none"){ showConfirm(); return; }   // 機種のない商品は、数量の確認ポップアップをそのまま出す
     $("#sheetHost").innerHTML = `<div class="sheet-bg" id="bg"><div class="sheet" role="dialog" aria-label="${esc(P.optionLabel || "数量")}の選択">
       <div class="sheet-h"><h2>${P.optionLabel ? esc(P.optionLabel) + "・" : ""}数量の選択</h2><button type="button" id="close" aria-label="閉じる">×</button></div>
       <div id="chooser">${chooser()}</div>
