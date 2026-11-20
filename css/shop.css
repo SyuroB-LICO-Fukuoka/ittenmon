@@ -262,3 +262,26 @@ footer.site{background:var(--text);color:#ddd;padding:48px 0 24px;font-size:13px
 
 /* スマホ：画面の下に固定の「デザインする」があるので、説明文の下のボタンは出さない */
 @media(max-width:959px){ #startBtn{display:none} }
+
+/* ===== 「ここを押すとデザインできる」をわかりやすく ===== */
+.mini-steps{display:flex;gap:8px;list-style:none;padding:0;margin:14px 0 4px;justify-content:center;flex-wrap:wrap}
+.mini-steps li{display:flex;align-items:center;gap:6px;font-size:12.5px;padding:6px 12px;border-radius:999px;background:#f3f1ec;color:var(--text);white-space:nowrap}
+.mini-steps b{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--text);color:#fff;font-size:11px}
+.p-main-img.tap-img{position:relative;cursor:pointer;-webkit-tap-highlight-color:transparent;animation:photoPop .7s cubic-bezier(.2,1.4,.4,1) both}
+.p-main-img.tap-img:active{transform:scale(.985)}
+@keyframes photoPop{0%{transform:translateY(34px) scale(.94);opacity:0}55%{transform:translateY(-10px) scale(1.015);opacity:1}78%{transform:translateY(3px) scale(.998)}100%{transform:none;opacity:1}}
+.img-cta{position:absolute;left:50%;top:14px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;white-space:nowrap;padding:11px 18px;border-radius:999px;background:rgba(39,167,201,.96);color:#fff;font-size:14px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.28);animation:ctaBob 2.4s ease-in-out 1.2s infinite}
+.img-cta i{font-style:normal;font-size:18px;line-height:1}
+@keyframes ctaBob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-4px)}}
+.cta-pulse{position:relative;animation:ctaRing 2.6s ease-out 1.5s infinite}
+.cta-pulse .arr{margin-left:8px;font-size:22px;line-height:1;vertical-align:-2px}
+@keyframes ctaRing{0%{box-shadow:0 0 0 0 rgba(39,167,201,.55)}70%{box-shadow:0 0 0 16px rgba(39,167,201,0)}100%{box-shadow:0 0 0 0 rgba(39,167,201,0)}}
+.cta-hint{display:none}
+@media(max-width:959px){
+  .cta-hint{display:block;position:absolute;right:14px;bottom:calc(100% + 12px);background:#17262a;color:#fff;padding:9px 14px;border-radius:12px;font-size:13px;font-weight:700;opacity:0;transform:translateY(8px);transition:.35s;pointer-events:none;white-space:nowrap}
+  .cta-hint::after{content:"";position:absolute;right:38px;top:100%;border:8px solid transparent;border-top-color:#17262a}
+  .cta-hint.show{opacity:1;transform:none;animation:hintBob 1.2s ease-in-out infinite}
+}
+@keyframes hintBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.pcard .pgo{display:inline-block;margin-top:8px;padding:8px 16px;border-radius:999px;background:var(--text);color:#fff;font-size:13px;font-weight:700}
+@media(prefers-reduced-motion:reduce){.p-main-img.tap-img,.img-cta,.cta-pulse,.cta-hint.show{animation:none}}

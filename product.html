@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/shop.css?v=1121g">
+<link rel="stylesheet" href="css/shop.css?v=1121h">
 <style>
 .p-main-img img{width:100%;height:100%;object-fit:cover}
 .points{list-style:none;display:flex;flex-direction:column;gap:8px;font-size:14px}
@@ -106,7 +106,7 @@
       <div class="plist">${S.PRODUCTS.map(p => `<a class="pcard" href="product.html?id=${p.id}">
         <div class="ph"><img src="${esc(p.images[0])}" alt="${esc(p.name)}の見本" loading="lazy"></div>
         <span class="s">${esc(p.series)}</span><span class="n">${esc(p.name)}</span>
-        <span class="pr">${priceText(p)}<small>（税込）</small></span></a>`).join("")}</div>
+        <span class="pr">${priceText(p)}<small>（税込）</small></span><span class="pgo">デザインする ›</span></a>`).join("")}</div>
       <section class="faq" id="faq"><h2>FAQ</h2><div>${S.faq.map(f => `<details><summary>Q. ${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("")}</div><p style="text-align:center;margin-top:18px"><button class="btn btn-line" type="button" data-chat>チャットで質問する</button></p></section>`;
     return;
   }
@@ -273,13 +273,37 @@
     };
   }
   $("#startBtn").onclick = open;
+  // 商品写真：弾んで出て、「タップしてデザインする」の表示つき。写真を押してもデザインが始まる
+  (function(){
+    const w = document.querySelector(".p-main-img"); if(!w) return;
+    w.classList.add("tap-img"); w.setAttribute("role", "button"); w.setAttribute("tabindex", "0"); w.setAttribute("aria-label", "タップして、デザインする");
+    const b = document.createElement("span"); b.className = "img-cta"; b.innerHTML = "タップして、デザインする<i aria-hidden=\"true\">›</i>"; w.appendChild(b);
+    w.onclick = open; w.onkeydown = e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); open(); } };
+  })();
+  // 上に、3ステップの案内
+  (function(){
+    const head = document.querySelector(".p-head"); if(!head) return;
+    const o = P.kind === "phone" ? "色・機種を選ぶ" : (P.kind === "none" ? "数量を選ぶ" : (P.optionLabel ? P.optionLabel + "を選ぶ" : "数量を選ぶ"));
+    const ol = document.createElement("ol"); ol.className = "mini-steps";
+    ol.innerHTML = `<li><b>1</b>${esc(o)}</li><li><b>2</b>写真と文字でデザイン</li><li><b>3</b>確認して注文</li>`;
+    head.insertAdjacentElement("afterend", ol);
+  })();
   // スマホ：画面の下に「デザインする」を固定（長い説明を読まずに、すぐ押せる）
   (function(){
     const mp = Math.min.apply(null, (P.variants || []).map(v => v.price).concat(P.price || [])), bar = document.createElement("div");
     bar.className = "sticky-cta";
-    bar.innerHTML = `<div class="p"><small>${(P.variants || []).length > 1 ? "" : P.short}</small><b>${yen(mp)}${(P.variants || []).length > 1 ? "〜" : ""}</b><small>税込・送料無料</small></div><button class="big-btn" type="button">デザインする</button>`;
+    bar.innerHTML = `<div class="p"><small>${(P.variants || []).length > 1 ? "" : P.short}</small><b>${yen(mp)}${(P.variants || []).length > 1 ? "〜" : ""}</b><small>税込・送料無料</small></div><button class="big-btn cta-pulse" type="button">デザインする<span class="arr" aria-hidden="true">›</span></button><div class="cta-hint" id="ctaHint">ここを押して、デザインスタート！</div>`;
     document.body.appendChild(bar); document.body.classList.add("has-sticky-cta");
     bar.querySelector("button").onclick = open;
+    // 最初の数秒だけ、押す場所の吹き出しを出す（1回だけ）
+    try{
+      if(!sessionStorage.getItem("ittenmon-hint")){
+        sessionStorage.setItem("ittenmon-hint", "1");
+        const h = document.getElementById("ctaHint"); h.classList.add("show");
+        setTimeout(() => h.classList.remove("show"), 6500);
+        bar.querySelector("button").addEventListener("click", () => h.classList.remove("show"), { once: true });
+      }
+    }catch(_){}
   })();
   if(qs.get("open")) open();
 })();
