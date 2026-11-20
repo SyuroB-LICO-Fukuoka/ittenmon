@@ -25,6 +25,7 @@ body{display:flex;flex-direction:column;background:#f1f0ed}
 .rail button[aria-pressed="true"]{color:#fff;background:#3d3d3d}
 .panel{background:#fff;border-right:1px solid var(--line);padding:18px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
 .panel h2{font-size:15px}
+.panel h3.sub{font-size:13px;color:var(--sub);margin:6px 0 -4px;font-weight:700}
 .panel .help{font-size:12px;color:var(--sub)}
 .tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);background:#fff;padding:22px 10px;cursor:pointer;font-size:14px;border-radius:6px;position:relative}
 .tile:hover{border-color:var(--text)}
@@ -788,11 +789,19 @@ function renderPanel(){
     panel.querySelectorAll("[data-t]").forEach(b => b.onclick = () => applyTemplate(TPL.find(x => x.id === b.dataset.t)));
   } else if(tool === "bg"){
     const cur = String(st.bg || "").indexOf("bg:") === 0 ? st.bg.slice(3) : "";
-    panel.innerHTML = `<div class="sheet-head"><h2>背景を選ぶ</h2><button type="button" id="sheetClose">閉じる</button></div><h2 class="d-only">背景</h2><p class="help">写真が全体をおおっていないときに見える背景です。${BGD.length}種類からえらべます。</p>
+    const isHex = typeof st.bg === "string" && st.bg.charAt(0) === "#";
+    const keep = fn => { const t = panel.scrollTop; fn(); panel.scrollTop = t; };
+    panel.innerHTML = `<div class="sheet-head"><h2>背景を選ぶ</h2><button type="button" id="sheetClose">閉じる</button></div><h2 class="d-only">背景</h2><p class="help">写真が全体をおおっていないときに見える背景です。柄（${BGD.length}種類）と、無地の色（${TC.length}色＋自由な色）からえらべます。</p>
       ${SH.base ? `<div class="btns"><button type="button" id="bgNone" ${st.bg ? "" : 'style="border-color:var(--text);background:#f7f6f3"'}>${esc(SH.baseLabel)}</button></div>` : ""}
-      <div class="tpl bgs">${BGD.map(b => `<button type="button" data-b="${b.id}" aria-pressed="${b.id === cur}"><img src="${bgThumb(b.id)}" alt=""><span>${esc(b.label)}</span></button>`).join("")}</div>`;
-    const bn = panel.querySelector("#bgNone"); if(bn) bn.onclick = () => { push(); st.bg = null; draw(); renderPanel(); };
-    panel.querySelectorAll("[data-b]").forEach(b => b.onclick = () => { push(); st.bg = "bg:" + b.dataset.b; draw(); renderPanel(); });
+      <h3 class="sub">柄・イラスト</h3>
+      <div class="tpl bgs">${BGD.map(b => `<button type="button" data-b="${b.id}" aria-pressed="${b.id === cur}"><img src="${bgThumb(b.id)}" alt=""><span>${esc(b.label)}</span></button>`).join("")}</div>
+      <h3 class="sub">無地の色</h3>
+      <div class="swatch bg100" id="bgs">${TC.map(c => `<button type="button" data-c="${c}" aria-pressed="${c === st.bg}" style="background:${c}" aria-label="${c}"></button>`).join("")}</div>
+      <div class="row"><label for="bgFree">ほかの色を自由に選ぶ</label><input type="color" id="bgFree" value="${isHex ? st.bg : "#ffffff"}"></div>`;
+    const bn = panel.querySelector("#bgNone"); if(bn) bn.onclick = () => { push(); st.bg = null; draw(); keep(renderPanel); };
+    panel.querySelectorAll("[data-b]").forEach(b => b.onclick = () => { push(); st.bg = "bg:" + b.dataset.b; draw(); keep(renderPanel); });
+    panel.querySelectorAll("#bgs button").forEach(b => b.onclick = () => { push(); st.bg = b.dataset.c; draw(); keep(renderPanel); });
+    panel.querySelector("#bgFree").onchange = e => { push(); st.bg = e.target.value; draw(); keep(renderPanel); };
   } else {
     panel.innerHTML = `<h2>レイヤー</h2><p class="help">選んだものを動かしたり、文字を直したりできます。</p>
       <div class="layers">${st.texts.map((t, i) => `<button type="button" data-l="${i}" aria-pressed="${sel === i}">${t.stk ? "スタンプ：" + ((STICKERS.find(x => x.id === t.stk) || {}).emoji || "♡") : "文字：" + (esc(t.text) || "（空）")}<span>›</span></button>`).reverse().join("")}
