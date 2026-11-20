@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/shop.css?v=1121a">
+<link rel="stylesheet" href="css/shop.css?v=1121b">
 <style>
 .p-main-img img{width:100%;height:100%;object-fit:cover}
 .points{list-style:none;display:flex;flex-direction:column;gap:8px;font-size:14px}
@@ -179,6 +179,30 @@
     if(P.kind === "variant") return `<div class="vars" id="vars">${P.variants.map(v => `<button type="button" data-v="${v.id}" aria-pressed="${v.id === opt}"><b>${esc(v.label)}　${yen(v.price)}</b>${esc(v.desc || "")}</button>`).join("")}</div>`;
     return "";
   }
+  // 機種を選んだら、確認のポップアップ（デザインへ進む／選び直す）
+  function showConfirm(){
+    const host = document.getElementById("popHost") || (() => { const h = document.createElement("div"); h.id = "popHost"; document.body.appendChild(h); return h; })();
+    const go = () => { location.href = `design.html?product=${P.id}&opt=${encodeURIComponent(opt)}${cc ? "&cc=" + cc : ""}&qty=${qty}`; };
+    const draw = () => {
+      host.innerHTML = `<div class="pop-bg" id="popbg"><div class="pop" role="dialog" aria-label="選んだ内容の確認">
+        <p class="pop-k">選んだ${esc(P.optionLabel || "内容")}</p>
+        <div class="pop-ic">${shapeIcon(P.kind === "phone" ? "phone" : P.id, opt, 84, cc)}</div>
+        <h3>${esc(opt)}</h3>
+        ${cc ? `<p class="pop-s">ケースの色：${esc(ccLabel())}</p>` : ""}
+        <div class="pop-q"><span>数量</span><button type="button" id="pqm" aria-label="1つ減らす">−</button><b id="pqn">${qty}</b><button type="button" id="pqp" aria-label="1つ増やす">＋</button></div>
+        <p class="pop-t">合計（税込）<b>${yen(unit() * qty)}</b></p>
+        <button class="big-btn" type="button" id="pgo">この${esc(P.optionLabel || "内容")}でデザインに進む</button>
+        <button class="pop-re" type="button" id="pre">${esc(P.optionLabel || "内容")}を選び直す</button>
+      </div></div>`;
+      document.getElementById("pgo").onclick = go;
+      document.getElementById("pre").onclick = () => { host.innerHTML = ""; };
+      document.getElementById("popbg").onclick = e => { if(e.target.id === "popbg") host.innerHTML = ""; };
+      document.getElementById("pqm").onclick = () => { qty = Math.max(1, qty - 1); const q = $("#q"); if(q) q.value = qty; upd2(); draw(); };
+      document.getElementById("pqp").onclick = () => { qty = Math.min(20, qty + 1); const q = $("#q"); if(q) q.value = qty; upd2(); draw(); };
+    };
+    const upd2 = () => { const el = $("#qs"); if(el){ $("#qs").textContent = yen(unit() * qty); $("#qt").textContent = yen(unit() * qty); } };
+    draw();
+  }
   function open(){
     $("#sheetHost").innerHTML = `<div class="sheet-bg" id="bg"><div class="sheet" role="dialog" aria-label="${esc(P.optionLabel || "数量")}の選択">
       <div class="sheet-h"><h2>${P.optionLabel ? esc(P.optionLabel) + "・" : ""}数量の選択</h2><button type="button" id="close" aria-label="閉じる">×</button></div>
@@ -199,6 +223,7 @@
       const b = e.target.closest("button[data-m],button[data-v]"); if(!b) return;
       opt = b.dataset.m || b.dataset.v;
       document.querySelectorAll("#chooser button[data-m],#chooser button[data-v]").forEach(x => x.setAttribute("aria-pressed", x === b)); upd();
+      if(b.dataset.m && (P.kind === "phone" || P.kind === "color")) showConfirm();
     };
     bind(); upd();
     $("#q").oninput = e => { qty = Math.max(1, Math.min(20, parseInt(e.target.value) || 1)); upd(); };
