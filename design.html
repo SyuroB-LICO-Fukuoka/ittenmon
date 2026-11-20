@@ -158,7 +158,7 @@ canvas#cv{touch-action:none;max-width:100%;max-height:calc(100vh - 200px);cursor
     <button type="button" data-tool="tmpl" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>テンプレ</button>
     <button type="button" data-tool="photo" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg>写真</button>
     <button type="button" data-tool="filter" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg>フィルター</button>
-    <button type="button" data-tool="ai" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z"/></svg>AI背景</button>
+    
     <button type="button" data-tool="text" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 6h14M12 6v13M9 19h6"/></svg>テキスト</button>
     <button type="button" data-tool="bg" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 7-7 7-7-7z"/><path d="M19 15c0 1.5 1 2.5 1 3.5a1 1 0 0 1-2 0c0-1 1-2 1-3.5z"/></svg>背景</button>
   </nav>
@@ -533,7 +533,6 @@ async function onPhoto(file){
     if(!st.photos.length){ if(pendingSlot){ wantCut = !!pendingSlot.cut; slotFit(p, pendingSlot); pendingSlot = null; } else fitCover(p); }   // 1枚目：テンプレートの枠、なければ全体に合わせる
     else p.scale = Math.min(PW * .6 / p.w, PH * .6 / p.h);           // 2枚目からは小さめに中央へ
     st.photos.push(p); selP = id; sel = "photo"; draw(); renderPanel();
-    try{ if(st.photos.length === 1 && !wantCut && !sessionStorage.getItem("ittenmon-ai-pop")){ sessionStorage.setItem("ittenmon-ai-pop", "1"); setTimeout(() => { tool = "ai"; document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", x.dataset.tool === "ai")); renderPanel(); }, 700); } }catch(_){}
     if(wantCut){ toast("背景を消しています（はじめては少し時間がかかります）"); setTimeout(removeBg, 0); }
     setState("写真を送っています…");
     const r = await api({ action: "uploadPhoto", sid: DSID, name: file.name, data: big.split(",")[1] });
@@ -794,7 +793,6 @@ function renderPanel(){
       <label class="tile" ${st.photos.length >= MAX_PHOTOS ? "hidden" : ""}><input type="file" id="file" accept="image/*"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg>${st.photos.length ? "写真を追加する（重ねる）" : "写真をえらぶ"}</label>
       ${st.photos.length ? "" : `<button class="btn btn-line" type="button" id="trySample" style="width:100%;margin-top:8px">見本の写真で試してみる</button><p class="help" style="font-size:12px">手もとに写真がなくても、見本の写真で仕上がりを試せます。あとで「この写真を消す」で入れ替えられます。</p>`}
       <p class="help">AIで作った柄やイラストも、ここから入れられます。</p>
-      <button class="btn" type="button" id="toAi" style="width:100%;min-height:52px;background:#8a5cc2;color:#fff;border:0;font-weight:800">✨ AIで背景・柄をつくって合成 ›</button>
       <p class="help">写真は${MAX_PHOTOS}枚まで入れられます（いま${st.photos.length}枚）。入れた順に 写真①・②・③ になり、あとから入れた写真ほど上に重なります。</p>
       ${st.photos.length > 1 ? `<div class="layers">${st.photos.map((x, i) => `<button type="button" data-ph="${x.id}" aria-pressed="${p && x.id === p.id}">写真${NUM(i)}${i === st.photos.length - 1 ? "（いちばん上）" : i === 0 ? "（いちばん下）" : ""}<span>›</span></button>`).reverse().join("")}</div>` : ""}
       ${p ? `<p class="state" id="photoState">${esc(photoStateText())}</p>
@@ -835,7 +833,6 @@ function renderPanel(){
       const cb = panel.querySelector("#cut"), ub = panel.querySelector("#uncut");
       if(cb) cb.onclick = removeBg;
       if(ub) ub.onclick = () => { m.img = m.orig; m.cut = false; draw(); renderPanel(); };
-      const ta2 = panel.querySelector("#toAi"); if(ta2) ta2.onclick = () => { tool = "ai"; document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", x.dataset.tool === "ai")); renderPanel(); };
       const tf = panel.querySelector("#toFilter"); if(tf) tf.onclick = () => { tool = "filter"; document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", x.dataset.tool === "filter")); renderPanel(); };
       const er = panel.querySelector("#cutEr"); if(er) er.oninput = () => setErode(+er.value);
       panel.querySelector("#pdel").onclick = () => { push(); st.photos.splice(st.photos.indexOf(p), 1); const top = st.photos[st.photos.length - 1]; selP = top ? top.id : null; sel = top ? "photo" : null; draw(); renderPanel(); };
@@ -902,33 +899,6 @@ function renderPanel(){
     panel.innerHTML = `<div class="sheet-head"><h2>テンプレートを選ぶ</h2><button type="button" id="sheetClose">閉じる</button></div><h2 class="d-only">テンプレート</h2><p class="help">好きなデザインを押すと、背景・写真の枠・文字がまとめて入ります。写真や文字は、あとから自由に変えられます。まちがえたら「元に戻す」で戻せます。</p>
       <div class="tpl">${TPL.map(t => `<button type="button" data-t="${t.id}"><img src="${tmplThumb(t)}" alt=""><span>${esc(t.label)}</span></button>`).join("")}</div>`;
     panel.querySelectorAll("[data-t]").forEach(b => b.onclick = () => applyTemplate(TPL.find(x => x.id === b.dataset.t)));
-  } else if(tool === "ai"){
-    const IDEAS = ["かわいい花柄", "キラキラの星空", "やさしい水彩のパステル", "和柄（桜と波）", "ポップなドット柄", "夕焼けの海", "もこもこの雲", "レトロなストライプ"];
-    panel.innerHTML = `<div class="sheet-head"><h2>AIで背景・柄をつくる</h2><button type="button" id="sheetClose">閉じる</button></div><h2 class="d-only">AI背景</h2>
-      <p class="help">${SH.label || "選んだケース"}の形に合わせて、AIが背景・柄をつくります。つくった背景の上に、いまの写真が重なります。</p>
-      <div class="ai-chips">${IDEAS.map(t => `<button type="button" data-idea="${t}">${t}</button>`).join("")}</div>
-      <textarea id="aiText" maxlength="120" rows="2" placeholder="例：ピンクと水色のゆめかわ雲の柄" style="width:100%;font-size:16px;padding:10px;border:1px solid #ccc;border-radius:10px"></textarea>
-      <button class="btn" type="button" id="aiGo" style="width:100%;min-height:56px;background:linear-gradient(180deg,#2d8cff,#0f62e6);color:#fff;font-weight:800;font-size:17px;border:0;border-radius:12px">✨ AIでつくる</button>
-      <p class="help" id="aiMsg" style="margin-top:8px">1回のデザインで3回までつくれます。人物・文字・キャラクターは入りません。</p>
-      <div id="aiOut"></div>`;
-    const ta = panel.querySelector("#aiText"), msg = panel.querySelector("#aiMsg"), out = panel.querySelector("#aiOut"), go = panel.querySelector("#aiGo");
-    panel.querySelectorAll("[data-idea]").forEach(b => b.onclick = () => { ta.value = b.dataset.idea; });
-    go.onclick = async () => {
-      const idea = ta.value.trim(); if(!idea){ msg.textContent = "どんな背景にしたいか、選ぶか入力してください。"; msg.style.color = "var(--danger)"; return; }
-      go.disabled = true; msg.style.color = ""; msg.textContent = "AIがつくっています…（10〜30秒ほど）"; out.innerHTML = "";
-      try{
-        const g = (a, b) => b ? g(b, a % b) : a, d = g(PW, PH);
-        const r = await api({ action: "aiBackground", sid: DSID, prompt: idea, ratio: Math.round(PW / d) + ":" + Math.round(PH / d) });
-        const url = "data:" + r.mime + ";base64," + r.data;
-        out.innerHTML = `<img src="${url}" alt="" style="width:50%;margin:8px auto;display:block;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.2)"><button class="btn" type="button" id="aiUse" style="width:100%;min-height:56px;background:linear-gradient(180deg,#2d8cff,#0f62e6);color:#fff;font-weight:800;font-size:17px;border:0;border-radius:12px">この背景にする</button>`;
-        msg.textContent = "気に入らなければ、言葉を変えて、もう一度つくれます（あと" + r.left + "回）。";
-        out.querySelector("#aiUse").onclick = async () => {
-          const keep = selP, bin = atob(r.data), u8 = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
-          await addAsBackground(new File([u8], "ai-bg.png", { type: r.mime })); closeSheet();
-        };
-      }catch(e){ msg.textContent = e.message; msg.style.color = "var(--danger)"; }
-      go.disabled = false;
-    };
   } else if(tool === "filter"){
     const p = cur(), m = curM();
     if(!p){
@@ -948,7 +918,7 @@ function renderPanel(){
     const keep = fn => { const t = panel.scrollTop; fn(); panel.scrollTop = t; };
     panel.innerHTML = `<div class="sheet-head"><h2>背景を選ぶ</h2><button type="button" id="sheetClose">閉じる</button></div><h2 class="d-only">背景</h2><p class="help">写真が全体をおおっていないときに見える背景です。柄（${BGD.length}種類）と、無地の色（${TC.length}色＋自由な色）からえらべます。</p>
       <div class="ai-box"><b>AIで作った柄・お手持ちの画像も、背景に使えます</b><span>画像を選ぶと、ケース全体に広がります（あとから位置や大きさを変えられます）。</span>
-        <button type="button" class="ai-btn" id="bgToAi" style="border:0;width:100%">✨ AIでこのケースに合う背景をつくる</button>
+        
         <label class="ai-btn"><input type="file" id="bgFileUp" accept="image/*" hidden>＋ 自分の柄・画像を背景にする</label></div>
       ${SH.base ? `<div class="btns"><button type="button" id="bgNone" ${st.bg ? "" : 'style="border-color:var(--text);background:#f7f6f3"'}>${esc(SH.baseLabel)}</button></div>` : ""}
       <h3 class="sub">柄・イラスト</h3>
@@ -956,7 +926,6 @@ function renderPanel(){
       <h3 class="sub">無地の色</h3>
       <div class="swatch bg100" id="bgs">${TC.map(c => `<button type="button" data-c="${c}" aria-pressed="${c === st.bg}" style="background:${c}" aria-label="${c}"></button>`).join("")}</div>
       <div class="row"><label for="bgFree">ほかの色を自由に選ぶ</label><input type="color" id="bgFree" value="${isHex ? st.bg : "#ffffff"}"></div>`;
-    const b2a = panel.querySelector("#bgToAi"); if(b2a) b2a.onclick = () => { tool = "ai"; document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", x.dataset.tool === "ai")); renderPanel(); };
     const upl = panel.querySelector("#bgFileUp"); if(upl) upl.onchange = e => { const f = e.target.files[0]; e.target.value = ""; if(f) addAsBackground(f); };
     const bn = panel.querySelector("#bgNone"); if(bn) bn.onclick = () => { push(); st.bg = null; draw(); keep(renderPanel); };
     panel.querySelectorAll("[data-b]").forEach(b => b.onclick = () => { push(); st.bg = "bg:" + b.dataset.b; draw(); keep(renderPanel); });
