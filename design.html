@@ -494,6 +494,7 @@ const BGD = [
   { id: "paw", label: "にくきゅう", draw(c, w, h){ c.fillStyle = "#fff3e2"; c.fillRect(0, 0, w, h); const g = w * .24; for(let y = 0, k = 0; y < h + g; y += g * .8, k++) for(let x = (k % 2) * g / 2; x < w + g; x += g){ c.save(); c.translate(x, y); c.rotate(-.35); paw(c, 0, 0, g * .2, "rgba(190,140,90,.28)"); c.restore(); } } },
   { id: "dots", label: "みずたま", draw(c, w, h){ c.fillStyle = "#ffe9ef"; c.fillRect(0, 0, w, h); const g = w * .16; for(let y = 0, k = 0; y < h + g; y += g, k++) for(let x = (k % 2) * g / 2; x < w + g; x += g){ c.fillStyle = (k + Math.round(x / g)) % 2 ? "rgba(255,255,255,.9)" : "rgba(255,182,204,.7)"; c.beginPath(); c.arc(x, y, g * .22, 0, 7); c.fill(); } } },
   { id: "rainbow", label: "にじ色", draw(c, w, h){ grad(c, w, h, [[0, "#ffd6e0"], [.2, "#ffe9c9"], [.4, "#fffbc9"], [.6, "#d6f5d6"], [.8, "#cfe8ff"], [1, "#e4d6ff"]]); } },
+  { id: "redstar", label: "赤い星", draw(c, w, h){ c.fillStyle = "#fff6ee"; c.fillRect(0, 0, w, h); const g = w * .22, r = rng(21); for(let y = 0, k = 0; y < h + g; y += g * .8, k++) for(let x = (k % 2) * g / 2; x < w + g; x += g){ c.save(); c.translate(x + (r() - .5) * g * .15, y + (r() - .5) * g * .15); c.rotate((r() - .5) * .7); const sz = g * (.2 + r() * .08); c.fillStyle = r() < .2 ? "#ff8a8a" : "#e03a3a"; c.beginPath(); for(let i = 0; i < 10; i++){ const a = -Math.PI / 2 + i * Math.PI / 5, q = i % 2 ? sz * .45 : sz; c.lineTo(Math.cos(a) * q, Math.sin(a) * q); } c.closePath(); c.fill(); c.restore(); } } },
   { id: "wood", label: "木目", draw(c, w, h){ grad(c, w, h, [[0, "#dcc7a6"], [1, "#cdb28d"]]); const r = rng(5); for(let i = 0; i < 90; i++){ const y = r() * h; c.strokeStyle = `rgba(120,86,52,${.08 + r() * .12})`; c.lineWidth = 1 + r() * 2.5; c.beginPath(); c.moveTo(0, y); c.bezierCurveTo(w * .3, y + (r() - .5) * h * .03, w * .7, y + (r() - .5) * h * .03, w, y + (r() - .5) * h * .02); c.stroke(); } } }
 ];
 function drawBg(c, id, w, h){ const d = BGD.find(x => x.id === id) || BGD[0]; c.save(); d.draw(c, w, h); c.restore(); }
@@ -709,7 +710,7 @@ function renderPanel(){
     panel.querySelectorAll("[data-t]").forEach(b => b.onclick = () => applyTemplate(TPL.find(x => x.id === b.dataset.t)));
   } else if(tool === "bg"){
     const cur = String(st.bg || "").indexOf("bg:") === 0 ? st.bg.slice(3) : "";
-    panel.innerHTML = `<h2>背景</h2><p class="help">写真が全体をおおっていないときに見える背景です。10種類からえらべます。</p>
+    panel.innerHTML = `<h2>背景</h2><p class="help">写真が全体をおおっていないときに見える背景です。11種類からえらべます。</p>
       ${SH.base ? `<div class="btns"><button type="button" id="bgNone" ${st.bg ? "" : 'style="border-color:var(--text);background:#f7f6f3"'}>${esc(SH.baseLabel)}</button></div>` : ""}
       <div class="tpl bgs">${BGD.map(b => `<button type="button" data-b="${b.id}" aria-pressed="${b.id === cur}"><img src="${bgThumb(b.id)}" alt=""><span>${esc(b.label)}</span></button>`).join("")}</div>`;
     const bn = panel.querySelector("#bgNone"); if(bn) bn.onclick = () => { push(); st.bg = null; draw(); renderPanel(); };
