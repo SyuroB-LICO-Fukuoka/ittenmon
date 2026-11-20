@@ -164,7 +164,7 @@
 
   /* ===== 画面 ===== */
   const css = `
-  .cb-btn{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:150;background:var(--text);color:#fff;border:0;border-radius:999px;padding:13px 18px;font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.18);font-family:var(--f-body)}
+  .cb-btn{display:none!important;position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:150;background:var(--text);color:#fff;border:0;border-radius:999px;padding:13px 18px;font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.18);font-family:var(--f-body)}
   .cb-btn svg{width:20px;height:20px}
   .cb{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:160;width:min(380px,calc(100vw - 32px));height:min(580px,calc(100vh - 100px));background:#fff;border:1px solid var(--line);box-shadow:0 12px 32px rgba(0,0,0,.18);display:flex;flex-direction:column;font-family:var(--f-body)}
   .cb[hidden],.cb-btn[hidden]{display:none}
@@ -187,7 +187,7 @@
   .cb-note{font-size:10px;color:var(--sub);text-align:center;padding:4px 8px;background:#fff}`;
   const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
   const wrap = document.createElement("div");
-  wrap.innerHTML = `<button class="cb-btn" type="button" aria-label="質問する（チャット）"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v11H9l-5 4z"/></svg>質問する</button>
+  wrap.innerHTML = `<button class="cb-btn" type="button" hidden aria-hidden="true" tabindex="-1" aria-label="質問する（チャット）"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v11H9l-5 4z"/></svg>質問する</button>
     <section class="cb" role="dialog" aria-label="${esc(S.SHOP_NAME)} チャット" hidden>
       <div class="cb-h"><div><b>${esc(S.SHOP_NAME)}</b><span>よくある質問に自動でお答えします</span></div><button type="button" aria-label="閉じる">×</button></div>
       <div class="cb-log" aria-live="polite"></div>
@@ -203,9 +203,11 @@
   // 分類の中の質問ボタン（＋分類にもどる）
   const inCat = cat => buttons(QA.filter(q => q.cat === cat).map(q => `<button type="button" data-q="${q.id}">${esc(q.label)}</button>`).join("") + `<button type="button" class="cat" data-cat="">ほかの分類を見る</button>`);
   let started = false;
-  function open(){ box.hidden = false; btn.hidden = true; if(!started){ started = true; add(`こんにちは！${esc(S.SHOP_NAME)}です。<br>知りたいことの分類を選ぶか、質問を送ってください。`, "bot"); menu(); } setTimeout(() => input.focus(), 50); }
-  btn.onclick = open;
-  wrap.querySelector(".cb-h button").onclick = () => { box.hidden = true; btn.hidden = false; };
+  function open(){ box.hidden = false; if(!started){ started = true; add(`こんにちは！${esc(S.SHOP_NAME)}です。<br>知りたいことの分類を選ぶか、質問を送ってください。`, "bot"); menu(); } setTimeout(() => input.focus(), 50); }
+  // 画面に追従するボタンは出さない。ページ内の「質問する」ボタン（data-chat）を押したときだけ開く
+  window.ITTENMON_openChat = open;
+  document.addEventListener("click", e => { const t = e.target.closest && e.target.closest("[data-chat]"); if(t){ e.preventDefault(); open(); } });
+  wrap.querySelector(".cb-h button").onclick = () => { box.hidden = true; };
   log.addEventListener("click", e => {
     const c = e.target.closest("button[data-cat]");
     if(c){ if(!c.dataset.cat){ menu(); return; } const cat = CATS.find(x => x.id === c.dataset.cat); add(esc(cat.label), "me"); inCat(cat.id); return; }

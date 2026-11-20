@@ -158,7 +158,7 @@
         <div class="foot">
           <div><div class="logo">${esc(S.SHOP_NAME)}</div><p style="margin-top:10px;color:#aaa">運営：株式会社かむらっど<br><a href="https://syurob-lico-fukuoka.github.io/syuroB-LICO/" target="_blank" rel="noopener" style="text-decoration:underline">就労継続支援B型 LICO（リコ）</a></p></div>
           <div><h4>ショップ</h4><ul><li><a href="product.html">商品</a></li><li><a href="gallery.html">ギャラリー（制作実績）</a></li><li><a href="index.html#howto">ご注文の流れ</a></li><li><a href="cart.html">カート</a></li><li><a href="mypage.html">マイページ（マイデザイン・注文の状況）</a></li></ul></div>
-          <div><h4>ご案内</h4><ul><li><a href="tokushoho.html">特定商取引法に基づく表記</a></li><li><a href="tokushoho.html#privacy">プライバシーポリシー</a></li><li><a href="${esc(S.LINE_URL)}" target="_blank" rel="noopener">LINEでお問い合わせ</a></li><li><a href="#" data-install="1">アプリで使う（ホーム画面に追加）</a></li><li style="margin-top:10px"><a href="staff.html" style="color:#888;font-size:11px">スタッフ用（受注管理）</a></li></ul></div>
+          <div><h4>ご案内</h4><ul><li><a href="tokushoho.html">特定商取引法に基づく表記</a></li><li><a href="tokushoho.html#privacy">プライバシーポリシー</a></li><li><a href="${esc(S.LINE_URL)}" target="_blank" rel="noopener">LINEでお問い合わせ</a></li><li><a href="#" data-chat>チャットで質問する</a></li><li><a href="#" data-install="1">アプリで使う（ホーム画面に追加）</a></li><li style="margin-top:10px"><a href="staff.html" style="color:#888;font-size:11px">スタッフ用（受注管理）</a></li></ul></div>
         </div>
         <div class="pay"><span>VISA</span><span>Mastercard</span><span>JCB</span><span>AMEX</span><span>Apple Pay</span><span>Google Pay</span></div>
         <p class="copy">© 2026 ${esc(S.SHOP_NAME)}</p>

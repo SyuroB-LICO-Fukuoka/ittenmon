@@ -259,3 +259,6 @@ footer.site{background:var(--text);color:#ddd;padding:48px 0 24px;font-size:13px
 .cc-sw{flex:none}
 .cc-now button{min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:13px;cursor:pointer}
 .pop-cc{display:flex;align-items:center;gap:10px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;font-size:14px}
+
+/* スマホ：画面の下に固定の「デザインする」があるので、説明文の下のボタンは出さない */
+@media(max-width:959px){ #startBtn{display:none} }
