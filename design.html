@@ -502,28 +502,53 @@ function bgThumb(id){ const k = document.createElement("canvas"); k.width = 84; 
 /* ===== テンプレート（背景・写真の枠・文字・飾りをまとめて入れる。座標は 横幅PW・縦PH に対する割合） ===== */
 let pendingSlot = null;
 const WB = { w: 22, color: "#ffffff", style: "solid" };
-const TPL = [
-  { id: "forever", label: "ずっと大好き", bg: "bg:natural", photo: { shape: "circle", x: .5, y: .4, d: .74, border: WB },
-    items: [{ text: "Forever in my heart", font: "greatv", color: "#7a5c43", s: .1, x: .5, y: .775 }, { text: "MOMO", font: "dancing", color: "#c9a24a", s: .12, x: .5, y: .855 }, { text: "2012.4.1 - 2026.10.1", font: "jost", color: "#7a5c43", s: .05, x: .5, y: .925 }] },
-  { id: "rainbow", label: "虹の橋", bg: "bg:rainbow", photo: { shape: "heart", x: .5, y: .43, d: .74 },
-    items: [{ stk: "e9", s: .26, x: .5, y: .1 }, { text: "Rainbow Bridge", font: "greatv", color: "#6b5aa8", s: .1, x: .5, y: .77 }, { text: "また会う日まで", font: "klee", color: "#7a5c43", s: .06, x: .5, y: .85 }, { stk: "paw", s: .14, x: .82, y: .92, color: "#a0703c" }] },
-  { id: "stars", label: "お星さまに", bg: "bg:stars", photo: { shape: "circle", x: .5, y: .4, d: .7, border: { w: 22, color: "#f4d57a", style: "solid" } },
-    items: [{ text: "Thank you", font: "greatv", color: "#f4d57a", s: .11, x: .5, y: .76 }, { text: "MOMO", font: "dancing", color: "#ffffff", s: .11, x: .5, y: .84 }, { stk: "e12", s: .1, x: .12, y: .12 }, { stk: "e2", s: .1, x: .88, y: .2 }] },
-  { id: "sakura", label: "さくら", bg: "bg:sakura", photo: { shape: "flower", x: .5, y: .42, d: .78 },
-    items: [{ text: "MOMO", font: "pacifico", color: "#e58fa8", s: .11, x: .5, y: .82 }, { text: "ずっといっしょ", font: "zenmaru", color: "#c06b88", s: .06, x: .5, y: .9 }] },
-  { id: "sky", label: "見守ってるよ", bg: "bg:sky", photo: { shape: "cloud", x: .5, y: .42, d: .8 },
-    items: [{ text: "ずっと見守ってるよ", font: "zenmaru", color: "#ffffff", s: .075, x: .5, y: .82, shadow: true }, { stk: "e2", s: .1, x: .14, y: .14 }] },
-  { id: "paw", label: "にくきゅう", bg: "bg:paw", photo: { shape: "heart", x: .5, y: .42, d: .74, border: WB },
-    items: [{ text: "MOMO", font: "pacifico", color: "#a0703c", s: .12, x: .5, y: .8 }, { text: "Love you forever", font: "dancing", color: "#a0703c", s: .07, x: .5, y: .89 }] },
-  { id: "meadow", label: "お散歩の思い出", bg: "bg:meadow", photo: { shape: "circle", x: .5, y: .4, d: .72, border: WB },
-    items: [{ text: "Walk with you", font: "dancing", color: "#2f6f3e", s: .1, x: .5, y: .79 }, { stk: "e8", s: .1, x: .5, y: .9 }] },
-  { id: "sunset", label: "夕やけ", bg: "bg:sunset", photo: { shape: "circle", x: .5, y: .38, d: .66, border: WB },
-    items: [{ text: "Thank you for everything", font: "greatv", color: "#ffffff", s: .075, x: .5, y: .72, shadow: true }, { text: "MOMO", font: "dancing", color: "#ffffff", s: .11, x: .5, y: .81, shadow: true }] },
-  { id: "mono", label: "モノクロ", bg: "bg:natural", photo: { shape: "rect", x: .5, y: .42, d: .82, ar: 1.1, filter: "mono", border: WB },
-    items: [{ text: "Memories", font: "playfair", color: "#4d4d4d", s: .09, x: .5, y: .84 }, { text: "MOMO  2012 - 2026", font: "jost", color: "#4d4d4d", s: .05, x: .5, y: .92 }] },
-  { id: "simple", label: "シンプル", bg: "bg:natural", photo: { shape: "rect", x: .5, y: .45, d: .9, ar: 1.2 },
-    items: [{ text: "MOMO", font: "dancing", color: "#7a5c43", s: .1, x: .5, y: .9 }] }
+const TW = { w: 12, color: "#ffffff", style: "solid" };   // 白いうすいふち
+const DK = "#3a3a3a", GR = "#777777", BR = "#6b5b4b", GD = "#b08d57";
+const TPL_ELEGANT = [
+  { id: "plain", label: "シンプル", bg: null, photo: { shape: "rect", x: .5, y: .45, d: .88, ar: 1.3 },
+    items: [{ text: "MOMO", font: "playfair", color: DK, s: .075, x: .5, y: .86 }, { text: "2012.4.1 - 2026.10.1", font: "jost", color: GR, s: .034, x: .5, y: .915 }] },
+  { id: "thanks", label: "ありがとう", bg: null, photo: { shape: "rect", x: .5, y: .45, d: .86, ar: 1.3 },
+    items: [{ text: "ありがとう", font: "shippori", color: DK, s: .085, x: .5, y: .855 }, { text: "MOMO", font: "jost", color: GR, s: .04, x: .5, y: .915 }] },
+  { id: "forever", label: "Forever", bg: null, photo: { shape: "rect", x: .5, y: .45, d: .86, ar: 1.3, border: TW },
+    items: [{ text: "Forever in my heart", font: "greatv", color: BR, s: .085, x: .5, y: .86 }, { text: "MOMO  2012 - 2026", font: "jost", color: "#888888", s: .036, x: .5, y: .925 }] },
+  { id: "iml", label: "In Loving Memory", bg: null, photo: { shape: "rect", x: .5, y: .45, d: .86, ar: 1.3 },
+    items: [{ text: "IN LOVING MEMORY", font: "jost", color: GR, s: .034, x: .5, y: .84 }, { text: "MOMO", font: "playfair", color: DK, s: .09, x: .5, y: .895 }] },
+  { id: "rainbow", label: "虹の橋", bg: null, photo: { shape: "rect", x: .5, y: .45, d: .86, ar: 1.3 },
+    items: [{ text: "Rainbow Bridge", font: "greatv", color: "#7a6a9a", s: .09, x: .5, y: .86 }, { text: "また会う日まで", font: "klee", color: GR, s: .045, x: .5, y: .925 }] },
+  { id: "hand", label: "手書き", bg: null, photo: { shape: "rect", x: .5, y: .45, d: .86, ar: 1.3 },
+    items: [{ text: "ずっと、だいすき", font: "klee", color: "#5a4a3a", s: .065, x: .5, y: .855 }, { text: "MOMO", font: "dancing", color: GD, s: .08, x: .5, y: .92 }] },
+  { id: "mono", label: "モノクロ", bg: null, photo: { shape: "rect", x: .5, y: .45, d: .86, ar: 1.3, filter: "mono" },
+    items: [{ text: "Memories", font: "playfair", color: "#333333", s: .08, x: .5, y: .86 }, { text: "MOMO  2012 - 2026", font: "jost", color: "#666666", s: .036, x: .5, y: .925 }] },
+  { id: "gold", label: "ゴールド", bg: null, photo: { shape: "rect", x: .5, y: .45, d: .86, ar: 1.3 },
+    items: [{ text: "Forever", font: "greatv", color: GD, s: .11, x: .5, y: .86 }, { text: "MOMO", font: "jost", color: GD, s: .045, x: .5, y: .925 }] },
+  { id: "name", label: "お名前だけ", bg: null, photo: { shape: "rect", x: .5, y: .46, d: .9, ar: 1.3 },
+    items: [{ text: "MOMO", font: "dancing", color: DK, s: .1, x: .5, y: .885 }] },
+  { id: "photo", label: "写真だけ", bg: null, photo: { shape: "rect", x: .5, y: .5, d: .96, ar: 1.5 }, items: [] }
 ];
+// スマホケース用：かわいい系（やさしい色・ハート・お花・スタンプ）
+const TPL_CUTE = [
+  { id: "sakura", label: "さくら", bg: "bg:sakura", photo: { shape: "flower", x: .5, y: .4, d: .8 },
+    items: [{ text: "MOMO", font: "pacifico", color: "#e58fa8", s: .13, x: .5, y: .78 }, { text: "ずっといっしょ", font: "zenmaru", color: "#c06b88", s: .06, x: .5, y: .85 }, { stk: "e5", s: .13, x: .87, y: .06 }, { stk: "e5", s: .1, x: .88, y: .93 }] },
+  { id: "yumekawa", label: "ゆめかわ", bg: "bg:rainbow", photo: { shape: "heart", x: .5, y: .4, d: .78, border: WB },
+    items: [{ text: "Love", font: "pacifico", color: "#d77aa8", s: .15, x: .5, y: .78 }, { stk: "e1", s: .13, x: .87, y: .06 }, { stk: "e2", s: .1, x: .62, y: .07 }, { stk: "e12", s: .1, x: .82, y: .9 }] },
+  { id: "sky", label: "おそらの上", bg: "bg:sky", photo: { shape: "cloud", x: .5, y: .42, d: .84 },
+    items: [{ text: "Happy day", font: "dancing", color: "#ffffff", s: .13, x: .5, y: .8, shadow: true }, { stk: "e9", s: .2, x: .5, y: .09 }] },
+  { id: "paw", label: "にくきゅう", bg: "bg:paw", photo: { shape: "heart", x: .5, y: .4, d: .78, border: WB },
+    items: [{ text: "MOMO", font: "pacifico", color: "#a0703c", s: .14, x: .5, y: .78 }, { stk: "e8", s: .12, x: .5, y: .88 }] },
+  { id: "meadow", label: "おさんぽ", bg: "bg:meadow", photo: { shape: "circle", x: .5, y: .4, d: .74, border: WB },
+    items: [{ text: "Walk with you", font: "dancing", color: "#2f6f3e", s: .12, x: .5, y: .78 }, { stk: "e8", s: .12, x: .5, y: .88 }] },
+  { id: "stars", label: "星空ナイト", bg: "bg:stars", photo: { shape: "circle", x: .5, y: .4, d: .72, border: { w: 22, color: "#f4d57a", style: "solid" } },
+    items: [{ text: "Good night", font: "greatv", color: "#f4d57a", s: .13, x: .5, y: .78 }, { stk: "e12", s: .1, x: .87, y: .06 }, { stk: "e2", s: .1, x: .66, y: .09 }] },
+  { id: "sunset", label: "夕やけ", bg: "bg:sunset", photo: { shape: "circle", x: .5, y: .38, d: .7, border: WB },
+    items: [{ text: "Thank you", font: "greatv", color: "#ffffff", s: .13, x: .5, y: .74, shadow: true }, { text: "MOMO", font: "dancing", color: "#ffffff", s: .12, x: .5, y: .83, shadow: true }] },
+  { id: "dots", label: "みずたま", bg: "bg:dots", photo: { shape: "star", x: .5, y: .4, d: .82, border: WB },
+    items: [{ text: "MOMO", font: "mplusr", color: "#ff6fa5", s: .13, x: .5, y: .78 }, { stk: "e11", s: .12, x: .87, y: .06 }, { stk: "e3", s: .12, x: .87, y: .9 }] },
+  { id: "bear", label: "くまさん", bg: "bg:natural", photo: { shape: "bear", x: .5, y: .4, d: .82, border: WB },
+    items: [{ text: "くまさん", font: "zenmaru", color: "#7a5c43", s: .1, x: .5, y: .78 }, { stk: "e10", s: .13, x: .5, y: .88 }] },
+  { id: "cat", label: "ねこ", bg: "bg:rainbow", photo: { shape: "cat", x: .5, y: .4, d: .82, border: WB },
+    items: [{ text: "にゃんこ", font: "zenmaru", color: "#d77aa8", s: .1, x: .5, y: .78 }, { stk: "e8", s: .1, x: .15, y: .92 }, { stk: "e1", s: .1, x: .86, y: .09 }] }
+];
+const TPL = PR.kind === "phone" ? TPL_CUTE : TPL_ELEGANT;
 function layoutFor(t){
   if(PW <= PH * 1.1) return { photo: t.photo, items: t.items };
   // 横長：写真を左、文字を右に並べる
@@ -560,7 +585,7 @@ function applyTemplate(t0){
 function tmplThumb(t0){
   const t = Object.assign({}, t0, layoutFor(t0));
   const k = document.createElement("canvas"), W = 96; k.width = W; k.height = Math.round(W * Math.min(PH / PW, 1.9)); const c = k.getContext("2d"), s = W / PW;
-  drawBg(c, t.bg.slice(3), k.width, k.height);
+  if(t.bg) drawBg(c, t.bg.slice(3), k.width, k.height); else { const g2 = 12; for(let yy = 0; yy * g2 < k.height; yy++) for(let xx = 0; xx * g2 < k.width; xx++){ c.fillStyle = (xx + yy) % 2 ? "#e9edf0" : "#f8fafb"; c.fillRect(xx * g2, yy * g2, g2, g2); } }
   const sl = t.photo, d = sl.d * PW * s, hh = sl.shape === "rect" ? d * (sl.ar || 1) : d;
   c.save(); c.translate(sl.x * PW * s, sl.y * PH * s * Math.min(1, k.height / (PH * s))); frameShape(c, sl.shape === "rect" ? "round" : sl.shape, d, hh); c.fillStyle = "#cfc4b6"; c.fill(); if(sl.border){ c.lineWidth = 2; c.strokeStyle = sl.border.color; c.stroke(); } c.restore();
   t.items.forEach(it => { c.save(); c.translate(it.x * PW * s, it.y * k.height); if(it.stk){ const d2 = STICKERS.find(x => x.id === it.stk) || {}; if(d2.emoji){ c.font = `${it.s * PW * s * 1.5}px sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(d2.emoji, 0, 0); } else { c.fillStyle = it.color || d2.c; c.beginPath(); c.arc(0, 0, it.s * PW * s * .5, 0, 7); c.fill(); } }
