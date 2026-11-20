@@ -425,9 +425,11 @@ async function onPhoto(file){
     Object.assign(m, { img, orig: img, cut: false, cutImg: null });
     push();
     const p = { id, w: img.naturalWidth, h: img.naturalHeight, x: PW / 2, y: PH / 2, scale: 1, rot: 0 };
-    if(!st.photos.length){ if(pendingSlot){ slotFit(p, pendingSlot); pendingSlot = null; } else fitCover(p); }   // 1枚目：テンプレートの枠、なければ全体に合わせる
+    let wantCut = false;
+    if(!st.photos.length){ if(pendingSlot){ wantCut = !!pendingSlot.cut; slotFit(p, pendingSlot); pendingSlot = null; } else fitCover(p); }   // 1枚目：テンプレートの枠、なければ全体に合わせる
     else p.scale = Math.min(PW * .6 / p.w, PH * .6 / p.h);           // 2枚目からは小さめに中央へ
     st.photos.push(p); selP = id; sel = "photo"; draw(); renderPanel();
+    if(wantCut){ toast("背景を消しています（はじめては少し時間がかかります）"); setTimeout(removeBg, 0); }
     setState("写真を送っています…");
     const r = await api({ action: "uploadPhoto", sid: DSID, name: file.name, data: big.split(",")[1] });
     m.fileId = r.fileId; m.uploading = false; if(selP === id) setState("写真を受け付けました");
@@ -545,6 +547,10 @@ const TPL_ELEGANT = [
 ];
 // スマホケース用：かわいい系（やさしい色・ハート・お花・スタンプ）
 const TPL_CUTE = [
+  { id: "cutstar", label: "切り抜き＋赤い星", bg: "bg:redstar", photo: { shape: "rect", x: .5, y: .72, d: .98, ar: 1, cut: true },
+    items: [{ text: "MOMO", font: "notosans", color: "#4a2a1a", s: .16, x: .5, y: .46 }] },
+  { id: "cutdots", label: "切り抜き＋黒ドット", bg: "bg:blackdots", photo: { shape: "rect", x: .5, y: .72, d: .98, ar: 1, cut: true },
+    items: [{ text: "MOMO", font: "notosans", color: "#ffffff", s: .16, x: .5, y: .46 }] },
   { id: "wan", label: "ワンワン！", bg: "bg:dogs", photo: { shape: "circle", x: .5, y: .42, d: .72, border: WB },
     items: [{ stk: "bubble", s: .34, x: .76, y: .13, color: "#ffffff" }, { text: "ワン！", font: "mplusr", color: "#d9822b", s: .1, x: .76, y: .125, rot: 8 }, { text: "MOMO", font: "pacifico", color: "#a0703c", s: .13, x: .5, y: .82 }, { stk: "e8", s: .1, x: .15, y: .92 }] },
   { id: "nyaa", label: "ニャー！", bg: "bg:cats", photo: { shape: "circle", x: .5, y: .42, d: .72, border: WB },
@@ -602,7 +608,7 @@ function applyTemplate(t0){
   const t = Object.assign({}, t0, layoutFor(t0)); push(); st.bg = t.bg;
   st.texts = t.items.map(it => it.stk ? { stk: it.stk, text: "", color: it.color || (STICKERS.find(x => x.id === it.stk) || {}).c || "#ffffff", size: Math.round(it.s * Math.min(PW, PH) * 1.6), x: it.x * PW, y: it.y * PH, rot: 0 }
     : { text: it.text, font: it.font, color: it.color, size: Math.round(it.s * PW), x: it.x * PW, y: it.y * PH, rot: 0, shadow: !!it.shadow });
-  if(st.photos.length){ slotFit(st.photos[0], t.photo); selP = st.photos[0].id; sel = "photo"; pendingSlot = null; } else { pendingSlot = t.photo; sel = null; }
+  if(st.photos.length){ slotFit(st.photos[0], t.photo); selP = st.photos[0].id; sel = "photo"; pendingSlot = null; if(t.photo.cut && !(media[selP] || {}).cut){ toast("背景を消しています（はじめては少し時間がかかります）"); setTimeout(removeBg, 0); } } else { pendingSlot = t.photo; sel = null; }
   const fl = new Set(t.items.filter(i => i.font).map(i => i.font));
   const fin = () => { draw(); renderPanel(); }; fin();
   if(document.fonts) Promise.all([...fl].map(id => { const f = P.fonts.find(x => x.id === id); return f ? document.fonts.load(`${f.weight || 400} 40px ${f.family}`, "あA") : null; })).then(fin);
