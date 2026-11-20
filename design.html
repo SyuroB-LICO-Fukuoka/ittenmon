@@ -484,18 +484,34 @@ function grad(c, w, h, stops){ const g = c.createLinearGradient(0, 0, 0, h); sto
 function cloud(c, x, y, r, col){ c.fillStyle = col; c.beginPath(); [[0, 0, 1], [-.9, .25, .75], [.9, .2, .8], [.35, -.35, .8], [-.4, -.25, .7]].forEach(([dx, dy, k]) => { c.moveTo(x + dx * r + r * k, y + dy * r); c.arc(x + dx * r, y + dy * r, r * k, 0, Math.PI * 2); }); c.fill(); }
 function paw(c, x, y, r, col){ c.fillStyle = col; c.beginPath(); c.ellipse(x, y + r * .25, r * .6, r * .5, 0, 0, 7); c.fill(); [[-.62, -.3], [-.22, -.72], [.22, -.72], [.62, -.3]].forEach(([dx, dy]) => { c.beginPath(); c.ellipse(x + dx * r, y + dy * r, r * .22, r * .3, 0, 0, 7); c.fill(); }); }
 function starDot(c, x, y, r, col){ c.fillStyle = col; c.beginPath(); for(let i = 0; i < 8; i++){ const a = i * Math.PI / 4, q = i % 2 ? r * .3 : r; c.lineTo(x + Math.cos(a) * q, y + Math.sin(a) * q); } c.closePath(); c.fill(); }
+function dogFace(c, x, y, r){ c.save(); c.translate(x, y);
+  c.fillStyle = "#b8803f"; c.beginPath(); c.ellipse(-r * .95, -r * .1, r * .32, r * .6, .25, 0, 7); c.fill(); c.beginPath(); c.ellipse(r * .95, -r * .1, r * .32, r * .6, -.25, 0, 7); c.fill();
+  c.fillStyle = "#f0c58a"; c.beginPath(); c.arc(0, 0, r, 0, 7); c.fill();
+  c.fillStyle = "#fff3df"; c.beginPath(); c.ellipse(0, r * .38, r * .55, r * .42, 0, 0, 7); c.fill();
+  c.fillStyle = "#3b2a20"; c.beginPath(); c.arc(-r * .36, -r * .12, r * .1, 0, 7); c.fill(); c.beginPath(); c.arc(r * .36, -r * .12, r * .1, 0, 7); c.fill();
+  c.beginPath(); c.ellipse(0, r * .2, r * .2, r * .14, 0, 0, 7); c.fill();
+  c.fillStyle = "#ff8fa8"; c.beginPath(); c.ellipse(0, r * .62, r * .16, r * .2, 0, 0, Math.PI); c.fill(); c.restore(); }
+function catFace(c, x, y, r){ c.save(); c.translate(x, y);
+  c.fillStyle = "#fffdf9"; c.beginPath(); c.arc(0, 0, r, 0, 7); c.fill();
+  c.beginPath(); c.moveTo(-r * .92, -r * .2); c.lineTo(-r * .72, -r * 1.12); c.lineTo(-r * .2, -r * .82); c.closePath(); c.fill(); c.beginPath(); c.moveTo(r * .92, -r * .2); c.lineTo(r * .72, -r * 1.12); c.lineTo(r * .2, -r * .82); c.closePath(); c.fill();
+  c.fillStyle = "#ffb3c6"; c.beginPath(); c.moveTo(-r * .74, -r * .52); c.lineTo(-r * .68, -r * .92); c.lineTo(-r * .4, -r * .76); c.closePath(); c.fill(); c.beginPath(); c.moveTo(r * .74, -r * .52); c.lineTo(r * .68, -r * .92); c.lineTo(r * .4, -r * .76); c.closePath(); c.fill();
+  c.fillStyle = "#3b2a20"; c.beginPath(); c.arc(-r * .36, -r * .05, r * .1, 0, 7); c.fill(); c.beginPath(); c.arc(r * .36, -r * .05, r * .1, 0, 7); c.fill();
+  c.fillStyle = "#ff8fa8"; c.beginPath(); c.moveTo(-r * .1, r * .18); c.lineTo(r * .1, r * .18); c.lineTo(0, r * .3); c.closePath(); c.fill();
+  c.strokeStyle = "#3b2a20"; c.lineWidth = Math.max(1, r * .05); c.beginPath(); c.moveTo(0, r * .3); c.lineTo(0, r * .42); c.moveTo(-r * .18, r * .52); c.quadraticCurveTo(0, r * .42, r * .18, r * .52); c.stroke();
+  c.strokeStyle = "rgba(60,40,30,.55)"; c.beginPath(); c.moveTo(-r * 1.0, r * .12); c.lineTo(-r * .55, r * .2); c.moveTo(-r * 1.0, r * .32); c.lineTo(-r * .55, r * .3); c.moveTo(r * 1.0, r * .12); c.lineTo(r * .55, r * .2); c.moveTo(r * 1.0, r * .32); c.lineTo(r * .55, r * .3); c.stroke(); c.restore(); }
+function animalPattern(c, w, h, bg, fn, flip){ c.fillStyle = bg; c.fillRect(0, 0, w, h); const g = w * .24, r = w * .075; for(let y = g * .6, k = 0; y < h + g; y += g * .85, k++) for(let x = (k % 2) * g / 2 + g * .4; x < w + g; x += g){ fn(c, x, y, r); } }
 const BGD = [
   { id: "natural", label: "ナチュラル", draw(c, w, h){ grad(c, w, h, [[0, "#f8f2e8"], [1, "#efe3cf"]]); } },
-  { id: "sky", label: "あおぞら", draw(c, w, h){ grad(c, w, h, [[0, "#86cdf5"], [1, "#eaf7ff"]]); const r = rng(3); for(let i = 0; i < 6; i++) cloud(c, r() * w, h * (.08 + i * .16) + r() * h * .04, w * (.07 + r() * .05), "rgba(255,255,255,.92)"); } },
-  { id: "sunset", label: "夕やけ", draw(c, w, h){ grad(c, w, h, [[0, "#7b6fc8"], [.45, "#ff9aa8"], [1, "#ffd9a8"]]); c.fillStyle = "rgba(255,244,214,.9)"; c.beginPath(); c.arc(w * .5, h * .62, w * .16, 0, 7); c.fill(); } },
-  { id: "stars", label: "星空", draw(c, w, h){ grad(c, w, h, [[0, "#0d1838"], [1, "#2a4580"]]); const r = rng(7); for(let i = 0; i < 70; i++){ const big = r() < .15; starDot(c, r() * w, r() * h, w * (big ? .018 : .006), big ? "#ffe9a6" : "rgba(255,255,255,.85)"); } c.fillStyle = "#ffe9a6"; c.beginPath(); c.arc(w * .82, h * .1, w * .07, 0, 7); c.fill(); c.fillStyle = "#1a2c5e"; c.beginPath(); c.arc(w * .85, h * .09, w * .06, 0, 7); c.fill(); } },
-  { id: "sakura", label: "さくら", draw(c, w, h){ grad(c, w, h, [[0, "#fff4f7"], [1, "#ffdbe6"]]); const r = rng(11); for(let i = 0; i < 40; i++){ c.save(); c.translate(r() * w, r() * h); c.rotate(r() * 6.28); c.fillStyle = r() < .5 ? "#ffc2d4" : "#ffd9e4"; c.beginPath(); c.ellipse(0, 0, w * .022, w * .012, 0, 0, 7); c.fill(); c.restore(); } } },
-  { id: "meadow", label: "草原", draw(c, w, h){ grad(c, w, h, [[0, "#d9f1ff"], [.55, "#eefaff"], [.56, "#b8e29a"], [1, "#86c46c"]]); c.fillStyle = "#a6d98a"; c.beginPath(); c.ellipse(w * .25, h * .6, w * .6, h * .07, 0, 0, 7); c.fill(); c.fillStyle = "#98d07c"; c.beginPath(); c.ellipse(w * .85, h * .62, w * .55, h * .08, 0, 0, 7); c.fill(); cloud(c, w * .3, h * .12, w * .08, "rgba(255,255,255,.95)"); cloud(c, w * .75, h * .22, w * .06, "rgba(255,255,255,.9)"); } },
+  { id: "sky", label: "あおぞら", draw(c, w, h){ grad(c, w, h, [[0, "#86cdf5"], [1, "#eaf7ff"]]); const r = rng(3); for(let i = 0; i < 5; i++) cloud(c, w * (.15 + (i % 2) * .6 + r() * .2), h * (.1 + i * .2) + r() * h * .03, w * (.11 + r() * .04), "rgba(255,255,255,.95)"); } },
+  { id: "stars", label: "星空", draw(c, w, h){ grad(c, w, h, [[0, "#0d1838"], [1, "#2a4580"]]); const r = rng(7); for(let i = 0; i < 24; i++){ const big = r() < .35; starDot(c, r() * w, r() * h, w * (big ? .034 : .02), big ? "#ffe9a6" : "rgba(255,255,255,.92)"); } c.fillStyle = "#ffe9a6"; c.beginPath(); c.arc(w * .8, h * .1, w * .08, 0, 7); c.fill(); c.fillStyle = "#1a2c5e"; c.beginPath(); c.arc(w * .84, h * .09, w * .07, 0, 7); c.fill(); } },
+  { id: "sakura", label: "さくら", draw(c, w, h){ grad(c, w, h, [[0, "#fff4f7"], [1, "#ffdbe6"]]); const r = rng(11); for(let i = 0; i < 18; i++){ c.save(); c.translate(r() * w, r() * h); c.rotate(r() * 6.28); c.fillStyle = r() < .5 ? "#ffb3c8" : "#ffc9d8"; c.beginPath(); c.ellipse(0, 0, w * .05, w * .028, 0, 0, 7); c.fill(); c.restore(); } } },
   { id: "paw", label: "にくきゅう", draw(c, w, h){ c.fillStyle = "#fff3e2"; c.fillRect(0, 0, w, h); const g = w * .24; for(let y = 0, k = 0; y < h + g; y += g * .8, k++) for(let x = (k % 2) * g / 2; x < w + g; x += g){ c.save(); c.translate(x, y); c.rotate(-.35); paw(c, 0, 0, g * .2, "rgba(190,140,90,.28)"); c.restore(); } } },
   { id: "dots", label: "みずたま", draw(c, w, h){ c.fillStyle = "#ffe9ef"; c.fillRect(0, 0, w, h); const g = w * .16; for(let y = 0, k = 0; y < h + g; y += g, k++) for(let x = (k % 2) * g / 2; x < w + g; x += g){ c.fillStyle = (k + Math.round(x / g)) % 2 ? "rgba(255,255,255,.9)" : "rgba(255,182,204,.7)"; c.beginPath(); c.arc(x, y, g * .22, 0, 7); c.fill(); } } },
   { id: "rainbow", label: "にじ色", draw(c, w, h){ grad(c, w, h, [[0, "#ffd6e0"], [.2, "#ffe9c9"], [.4, "#fffbc9"], [.6, "#d6f5d6"], [.8, "#cfe8ff"], [1, "#e4d6ff"]]); } },
-  { id: "redstar", label: "赤い星", draw(c, w, h){ c.fillStyle = "#ffffff"; c.fillRect(0, 0, w, h); const g = w * .22, r = rng(21); for(let y = 0, k = 0; y < h + g; y += g * .8, k++) for(let x = (k % 2) * g / 2; x < w + g; x += g){ c.save(); c.translate(x + (r() - .5) * g * .15, y + (r() - .5) * g * .15); c.rotate((r() - .5) * .7); const sz = g * (.2 + r() * .08); r(); c.fillStyle = "#e03a3a"; c.beginPath(); for(let i = 0; i < 10; i++){ const a = -Math.PI / 2 + i * Math.PI / 5, q = i % 2 ? sz * .45 : sz; c.lineTo(Math.cos(a) * q, Math.sin(a) * q); } c.closePath(); c.fill(); c.restore(); } } },
+  { id: "redstar", label: "赤い星", draw(c, w, h){ c.fillStyle = "#ffffff"; c.fillRect(0, 0, w, h); const g = w * .13, r = rng(21); for(let y = 0, k = 0; y < h + g; y += g * .8, k++) for(let x = (k % 2) * g / 2; x < w + g; x += g){ c.save(); c.translate(x, y); c.rotate((r() - .5) * .5); const sz = g * (.27 + r() * .02); r(); c.fillStyle = "#e03a3a"; c.beginPath(); for(let i = 0; i < 10; i++){ const a = -Math.PI / 2 + i * Math.PI / 5, q = i % 2 ? sz * .45 : sz; c.lineTo(Math.cos(a) * q, Math.sin(a) * q); } c.closePath(); c.fill(); c.restore(); } } },
   { id: "blackdots", label: "黒にドット", draw(c, w, h){ c.fillStyle = "#111111"; c.fillRect(0, 0, w, h); const g = w * .13; for(let y = 0, k = 0; y < h + g; y += g, k++) for(let x = (k % 2) * g / 2; x < w + g; x += g){ c.fillStyle = "#ffffff"; c.beginPath(); c.arc(x, y, g * .16, 0, 7); c.fill(); } } },
+  { id: "dogs", label: "わんこ", draw(c, w, h){ animalPattern(c, w, h, "#fff0cf", dogFace); } },
+  { id: "cats", label: "にゃんこ", draw(c, w, h){ animalPattern(c, w, h, "#ffe1ea", catFace); } },
   { id: "wood", label: "木目", draw(c, w, h){ grad(c, w, h, [[0, "#dcc7a6"], [1, "#cdb28d"]]); const r = rng(5); for(let i = 0; i < 90; i++){ const y = r() * h; c.strokeStyle = `rgba(120,86,52,${.08 + r() * .12})`; c.lineWidth = 1 + r() * 2.5; c.beginPath(); c.moveTo(0, y); c.bezierCurveTo(w * .3, y + (r() - .5) * h * .03, w * .7, y + (r() - .5) * h * .03, w, y + (r() - .5) * h * .02); c.stroke(); } } }
 ];
 function drawBg(c, id, w, h){ const d = BGD.find(x => x.id === id) || BGD[0]; c.save(); d.draw(c, w, h); c.restore(); }
@@ -529,6 +545,14 @@ const TPL_ELEGANT = [
 ];
 // スマホケース用：かわいい系（やさしい色・ハート・お花・スタンプ）
 const TPL_CUTE = [
+  { id: "wan", label: "ワンワン！", bg: "bg:dogs", photo: { shape: "circle", x: .5, y: .42, d: .72, border: WB },
+    items: [{ stk: "bubble", s: .34, x: .76, y: .13, color: "#ffffff" }, { text: "ワン！", font: "mplusr", color: "#d9822b", s: .1, x: .76, y: .125, rot: 8 }, { text: "MOMO", font: "pacifico", color: "#a0703c", s: .13, x: .5, y: .82 }, { stk: "e8", s: .1, x: .15, y: .92 }] },
+  { id: "nyaa", label: "ニャー！", bg: "bg:cats", photo: { shape: "circle", x: .5, y: .42, d: .72, border: WB },
+    items: [{ stk: "bubble", s: .34, x: .76, y: .13, color: "#ffffff" }, { text: "ニャー！", font: "mplusr", color: "#e0608a", s: .085, x: .76, y: .125, rot: 8 }, { text: "MOMO", font: "pacifico", color: "#e0608a", s: .13, x: .5, y: .82 }, { stk: "e1", s: .1, x: .15, y: .92 }] },
+  { id: "wanwan2", label: "ワンワン♪", bg: "bg:dots", photo: { shape: "heart", x: .5, y: .42, d: .78, border: WB },
+    items: [{ stk: "bubble", s: .34, x: .24, y: .12, color: "#ffffff" }, { text: "ワンワン！", font: "mplusr", color: "#ff6fa5", s: .07, x: .24, y: .115, rot: -8 }, { text: "だいすき", font: "zenmaru", color: "#ff6fa5", s: .1, x: .5, y: .82 }] },
+  { id: "nyaa2", label: "にゃんにゃん", bg: "bg:sakura", photo: { shape: "cat", x: .5, y: .42, d: .82, border: WB },
+    items: [{ stk: "bubble", s: .34, x: .76, y: .12, color: "#ffffff" }, { text: "にゃーん", font: "zenmaru", color: "#e58fa8", s: .08, x: .76, y: .115, rot: 8 }, { text: "MOMO", font: "pacifico", color: "#e58fa8", s: .13, x: .5, y: .82 }] },
   { id: "sakura", label: "さくら", bg: "bg:sakura", photo: { shape: "flower", x: .5, y: .4, d: .8 },
     items: [{ text: "MOMO", font: "pacifico", color: "#e58fa8", s: .13, x: .5, y: .78 }, { text: "ずっといっしょ", font: "zenmaru", color: "#c06b88", s: .06, x: .5, y: .85 }, { stk: "e5", s: .13, x: .87, y: .06 }, { stk: "e5", s: .1, x: .88, y: .93 }] },
   { id: "yumekawa", label: "ゆめかわ", bg: "bg:rainbow", photo: { shape: "heart", x: .5, y: .4, d: .78, border: WB },
@@ -537,14 +561,14 @@ const TPL_CUTE = [
     items: [{ text: "Happy day", font: "dancing", color: "#ffffff", s: .13, x: .5, y: .8, shadow: true }, { stk: "e9", s: .2, x: .5, y: .09 }] },
   { id: "paw", label: "にくきゅう", bg: "bg:paw", photo: { shape: "heart", x: .5, y: .4, d: .78, border: WB },
     items: [{ text: "MOMO", font: "pacifico", color: "#a0703c", s: .14, x: .5, y: .78 }, { stk: "e8", s: .12, x: .5, y: .88 }] },
-  { id: "meadow", label: "おさんぽ", bg: "bg:meadow", photo: { shape: "circle", x: .5, y: .4, d: .74, border: WB },
-    items: [{ text: "Walk with you", font: "dancing", color: "#2f6f3e", s: .12, x: .5, y: .78 }, { stk: "e8", s: .12, x: .5, y: .88 }] },
   { id: "stars", label: "星空ナイト", bg: "bg:stars", photo: { shape: "circle", x: .5, y: .4, d: .72, border: { w: 22, color: "#f4d57a", style: "solid" } },
     items: [{ text: "Good night", font: "greatv", color: "#f4d57a", s: .13, x: .5, y: .78 }, { stk: "e12", s: .1, x: .87, y: .06 }, { stk: "e2", s: .1, x: .66, y: .09 }] },
-  { id: "sunset", label: "夕やけ", bg: "bg:sunset", photo: { shape: "circle", x: .5, y: .38, d: .7, border: WB },
-    items: [{ text: "Thank you", font: "greatv", color: "#ffffff", s: .13, x: .5, y: .74, shadow: true }, { text: "MOMO", font: "dancing", color: "#ffffff", s: .12, x: .5, y: .83, shadow: true }] },
   { id: "dots", label: "みずたま", bg: "bg:dots", photo: { shape: "star", x: .5, y: .4, d: .82, border: WB },
     items: [{ text: "MOMO", font: "mplusr", color: "#ff6fa5", s: .13, x: .5, y: .78 }, { stk: "e11", s: .12, x: .87, y: .06 }, { stk: "e3", s: .12, x: .87, y: .9 }] },
+  { id: "redstar", label: "赤い星", bg: "bg:redstar", photo: { shape: "circle", x: .5, y: .4, d: .72, border: WB },
+    items: [{ text: "MOMO", font: "pacifico", color: "#e03a3a", s: .14, x: .5, y: .78 }] },
+  { id: "blackdots", label: "黒にドット", bg: "bg:blackdots", photo: { shape: "circle", x: .5, y: .4, d: .72, border: WB },
+    items: [{ text: "MOMO", font: "pacifico", color: "#ffffff", s: .14, x: .5, y: .78 }] },
   { id: "bear", label: "くまさん", bg: "bg:natural", photo: { shape: "bear", x: .5, y: .4, d: .82, border: WB },
     items: [{ text: "くまさん", font: "zenmaru", color: "#7a5c43", s: .1, x: .5, y: .78 }, { stk: "e10", s: .13, x: .5, y: .88 }] },
   { id: "cat", label: "ねこ", bg: "bg:rainbow", photo: { shape: "cat", x: .5, y: .4, d: .82, border: WB },
@@ -711,7 +735,7 @@ function renderPanel(){
     panel.querySelectorAll("[data-t]").forEach(b => b.onclick = () => applyTemplate(TPL.find(x => x.id === b.dataset.t)));
   } else if(tool === "bg"){
     const cur = String(st.bg || "").indexOf("bg:") === 0 ? st.bg.slice(3) : "";
-    panel.innerHTML = `<h2>背景</h2><p class="help">写真が全体をおおっていないときに見える背景です。12種類からえらべます。</p>
+    panel.innerHTML = `<h2>背景</h2><p class="help">写真が全体をおおっていないときに見える背景です。${BGD.length}種類からえらべます。</p>
       ${SH.base ? `<div class="btns"><button type="button" id="bgNone" ${st.bg ? "" : 'style="border-color:var(--text);background:#f7f6f3"'}>${esc(SH.baseLabel)}</button></div>` : ""}
       <div class="tpl bgs">${BGD.map(b => `<button type="button" data-b="${b.id}" aria-pressed="${b.id === cur}"><img src="${bgThumb(b.id)}" alt=""><span>${esc(b.label)}</span></button>`).join("")}</div>`;
     const bn = panel.querySelector("#bgNone"); if(bn) bn.onclick = () => { push(); st.bg = null; draw(); renderPanel(); };
