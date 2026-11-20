@@ -378,6 +378,7 @@ function scallop(c, n, r0, sx, sy){
 /* ===== 描画 ===== */
 function caseClip(c, s){ shapePath(c, SH, s); }
 function camPath(c, s){ c.beginPath(); SH.holes.forEach(k => c.roundRect(k.x * s, k.y * s, k.w * s, k.h * s, Math.min(k.r, k.w / 2, k.h / 2) * s)); }
+let noFrame = false;   // 保存用の画像には、選択中の枠を入れない
 function paint(c, s, forPrint){
   c.save(); caseClip(c, s); c.clip();
   if(st.bg){ if(String(st.bg).indexOf("bg:") === 0) drawBg(c, st.bg.slice(3), PW * s, PH * s); else { c.fillStyle = st.bg; c.fillRect(0, 0, PW * s, PH * s); } }
@@ -426,7 +427,7 @@ function paint(c, s, forPrint){
     c.save(); caseClip(c, s); c.lineWidth = 2; c.strokeStyle = "#e5007f"; c.stroke(); c.restore();  // ケースの線
     // 選んでいるものの枠
     const b = bounds(sel);
-    if(b){ c.save(); c.translate(b.x * s, b.y * s); c.rotate(b.rot * Math.PI / 180); c.setLineDash([6, 4]); c.strokeStyle = "#1f8fff"; c.lineWidth = 1.5; c.strokeRect(-b.w * s / 2, -b.h * s / 2, b.w * s, b.h * s); c.restore(); }
+    if(b && tool !== "" && !noFrame){ c.save(); c.translate(b.x * s, b.y * s); c.rotate(b.rot * Math.PI / 180); c.setLineDash([6, 4]); c.strokeStyle = "#1f8fff"; c.lineWidth = 1.5; c.strokeRect(-b.w * s / 2, -b.h * s / 2, b.w * s, b.h * s); c.restore(); }
   }
 }
 function bounds(which){
@@ -550,6 +551,19 @@ async function refineAlpha(img, er){
   const x = c.getContext("2d"); x.drawImage(img, 0, 0);
   const d0 = x.getImageData(0, 0, w, h), px = d0.data;
   for(let i = 3; i < px.length; i += 4){ let a = px[i] / 255; a = a < .1 ? 0 : a > .9 ? 1 : (a - .1) / .8; px[i] = (a * a * (3 - 2 * a)) * 255; }
+  // 変な残り（本体から離れた小さな島・ゴミ）を消す：つながった塊のうち、最大の塊の6%未満のものを透明にする
+  { const lab = new Int32Array(w * h), sizes = [0], q = new Int32Array(w * h); let n = 0;
+    for(let s0 = 0; s0 < w * h; s0++){
+      if(lab[s0] || px[s0 * 4 + 3] < 40) continue;
+      n++; let qs = 0, qe = 0, cnt = 0; q[qe++] = s0; lab[s0] = n;
+      while(qs < qe){ const p = q[qs++]; cnt++; const xx = p % w, yy = (p - xx) / w;
+        if(xx > 0 && !lab[p - 1] && px[(p - 1) * 4 + 3] >= 40){ lab[p - 1] = n; q[qe++] = p - 1; }
+        if(xx < w - 1 && !lab[p + 1] && px[(p + 1) * 4 + 3] >= 40){ lab[p + 1] = n; q[qe++] = p + 1; }
+        if(yy > 0 && !lab[p - w] && px[(p - w) * 4 + 3] >= 40){ lab[p - w] = n; q[qe++] = p - w; }
+        if(yy < h - 1 && !lab[p + w] && px[(p + w) * 4 + 3] >= 40){ lab[p + w] = n; q[qe++] = p + w; } }
+      sizes[n] = cnt; }
+    const big = Math.max(0, ...sizes);
+    for(let p = 0; p < w * h; p++){ const l = lab[p]; if(l && sizes[l] < big * .06) px[p * 4 + 3] = 0; } }
   x.putImageData(d0, 0, 0);
   if(er > 0){
     const step = Math.max(1, Math.round(Math.max(w, h) / 1200));
@@ -561,21 +575,42 @@ async function refineAlpha(img, er){
   }
   const o = new Image(); o.src = c.toDataURL("image/png"); await o.decode(); return o;
 }
+let bgLib = null;
+async function loadBgLib(){ if(!bgLib) bgLib = import("https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm").catch(e => { bgLib = null; throw e; }); return bgLib; }
+// 切り抜きの出来を点検：全部消えた／ほとんど消えていない結果は失敗とみなす
+async function cutLooksOk(img){
+  const w = 96, h = Math.max(1, Math.round(96 * img.naturalHeight / img.naturalWidth)), c = document.createElement("canvas"); c.width = w; c.height = h;
+  const x = c.getContext("2d", { willReadFrequently: true }); x.drawImage(img, 0, 0, w, h);
+  const px = x.getImageData(0, 0, w, h).data; let on = 0; for(let i = 3; i < px.length; i += 4) if(px[i] > 128) on++;
+  const r = on / (w * h); return r > .04 && r < .985;
+}
 async function removeBg(){
   const m = curM(); if(cutting || !m.orig) return;
   if(m.cutImg){ m.img = m.cutImg; m.cut = true; draw(); renderPanel(); return; }
   cutting = true; renderPanel();
-  try{
-    const { removeBackground } = await import("https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm");
-    const blob = await removeBackground(m.orig.src, {
-      model: "isnet_fp16", output: { format: "image/png" },   // 高精度のモデル（はじめは読み込みに時間がかかります）
-      progress: (key, now, total) => { const el = document.getElementById("cutState"); if(el && total) el.textContent = "準備しています… " + Math.round(now / total * 100) + "%（はじめだけ、少し時間がかかります）"; }
-    });
-    const raw = new Image(); raw.src = URL.createObjectURL(blob); await raw.decode();
-    m.cutRaw = raw; m.erode = 1; m.cutImg = await refineAlpha(raw, 1); m.img = m.cutImg; m.cut = true;
+  // 入力は長辺1800pxまでに縮める（大きいとスマホのメモリ不足で失敗するため）。失敗したら軽いモデルでやり直す
+  const src = m.orig, sc = Math.min(1, 1800 / Math.max(src.naturalWidth, src.naturalHeight));
+  const inp = document.createElement("canvas"); inp.width = Math.round(src.naturalWidth * sc); inp.height = Math.round(src.naturalHeight * sc); inp.getContext("2d").drawImage(src, 0, 0, inp.width, inp.height);
+  const inBlob = await new Promise(r => inp.toBlob(r, "image/png"));
+  const tries = ["isnet_fp16", "isnet_fp16", "isnet_quint8"]; let ok = null, lastErr = null;
+  for(let t = 0; t < tries.length && !ok; t++){
+    try{
+      const el0 = document.getElementById("cutState"); if(t && el0) el0.textContent = "うまくいかなかったので、やり直しています…（" + t + "/2）";
+      if(t) await new Promise(r => setTimeout(r, 600));
+      const { removeBackground } = await loadBgLib();
+      const blob = await removeBackground(inBlob, {
+        model: tries[t], output: { format: "image/png" },
+        progress: (key, now, total) => { const el = document.getElementById("cutState"); if(el && total) el.textContent = "準備しています… " + Math.round(now / total * 100) + "%（はじめだけ、少し時間がかかります）"; }
+      });
+      const raw = new Image(); raw.src = URL.createObjectURL(blob); await raw.decode();
+      if(await cutLooksOk(raw)) ok = raw; else lastErr = new Error("結果が不自然でした");
+    }catch(err){ console.error("cut try " + t, err); lastErr = err; }
+  }
+  if(ok){
+    m.cutRaw = ok; m.erode = 1; m.cutImg = await refineAlpha(ok, 1); m.img = m.cutImg; m.cut = true;
     if(st.bg === "#ffffff") toast("背景を消しました。「背景」から色や柄を選べます");
-  }catch(err){
-    toast("背景を消せませんでした。別の写真か、時間をおいてお試しください");
+  }else{
+    toast("背景を消せませんでした。もう一度押すか、別の写真でお試しください");
   }
   cutting = false; draw(); renderPanel();
 }
@@ -612,7 +647,7 @@ async function addAsBackground(file){
     draw(); renderPanel(); toast("背景に入れました。「写真」から、位置や大きさを変えられます");
   }
 }
-function closeSheet(){ tool = ""; document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", "false")); renderPanel(); }
+function closeSheet(){ tool = ""; try{ draw(); }catch(_){}  document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", "false")); renderPanel(); }
 let tool = PR.id === "memorial" ? "tmpl" : "photo";
 setTimeout(() => document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", x.dataset.tool === tool)), 0);
 document.querySelectorAll(".rail button").forEach(b => b.onclick = () => { if(window.innerWidth <= 820 && tool === b.dataset.tool) tool = ""; else tool = b.dataset.tool; document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", x.dataset.tool === tool)); renderPanel(); });
@@ -955,11 +990,11 @@ document.getElementById("confirmBtn").onclick = () => {
   const png = !st.bg;   // 素材の色を残すときは、何も印刷しない部分を透明にする
   const full = out.toDataURL(png ? "image/png" : "image/jpeg", .95);
   const prev = document.createElement("canvas"); prev.width = Math.round(PW * .25); prev.height = Math.round(PH * .25);
-  const pc = prev.getContext("2d"); paint(pc, .25, false);
+  noFrame = true; const pc = prev.getContext("2d"); noFrame = true; paint(pc, .25, false);
   const thumb = prev.toDataURL("image/jpeg", .85);
   // お客様が画面で見ている完成イメージ（ケースの形・カメラの穴・素材の色ごと）。LICOが配置を確認するために保存する
   const look = document.createElement("canvas"); look.width = Math.round(PW * .6); look.height = Math.round(PH * .6);
-  const lc = look.getContext("2d"); lc.fillStyle = "#ffffff"; lc.fillRect(0, 0, look.width, look.height); paint(lc, .6, false);
+  const lc = look.getContext("2d"); lc.fillStyle = "#ffffff"; lc.fillRect(0, 0, look.width, look.height); paint(lc, .6, false); noFrame = false;
   const lookData = look.toDataURL("image/jpeg", .9);
   const host = document.getElementById("modalHost");
   host.innerHTML = `<div class="modal" id="md"><div class="box">
@@ -1000,7 +1035,7 @@ async function saveMy(){
   const btn = document.getElementById("saveMy"); btn.disabled = true;
   try{
     const prev = document.createElement("canvas"); prev.width = Math.round(PW * .25); prev.height = Math.round(PH * .25);
-    const pc = prev.getContext("2d"); pc.fillStyle = "#ffffff"; pc.fillRect(0, 0, prev.width, prev.height); paint(pc, .25, false);
+    const pc = prev.getContext("2d"); pc.fillStyle = "#ffffff"; pc.fillRect(0, 0, prev.width, prev.height); noFrame = true; paint(pc, .25, false); noFrame = false;
     const media2 = {};
     for(const p of st.photos){
       const m = media[p.id];
