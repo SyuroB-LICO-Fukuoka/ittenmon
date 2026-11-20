@@ -83,6 +83,10 @@ label.tile:active{transform:scale(.98)}
 .tools button{border:1px solid var(--line);background:#fff;padding:6px 10px;font-size:12px;cursor:pointer}
 .tools button:disabled{opacity:.4;cursor:default}
 .tools #saveMy{border:2px solid #1a8f5a;color:#1a8f5a;font-weight:800;background:#effaf4}
+.sample-hint{display:flex;flex-direction:column;align-items:center;gap:4px;margin:6px 0;padding:10px 12px;border:2px solid #e5007f;border-radius:12px;background:#fff0f7;color:#8a0a4b;text-align:center;font-size:13px;line-height:1.5}
+.sample-hint[hidden]{display:none}
+.sample-hint b{font-size:15px}
+.sample-hint button{margin-top:4px;min-height:44px;padding:0 20px;border:0;border-radius:999px;background:#e5007f;color:#fff;font-size:15px;font-weight:800}
 .autonote{font-size:11px;color:#1a8f5a;align-self:center}
 .resume-bar{position:fixed;left:10px;right:10px;top:70px;z-index:60;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#17262a;color:#fff;padding:12px 14px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:14px}
 .resume-bar span{flex:1 1 100%}
@@ -199,6 +203,7 @@ canvas#cv{touch-action:none;max-width:100%;max-height:calc(100vh - 200px);cursor
       <button type="button" id="cutQuick" class="cutq" hidden>✂ 背景を消す</button>
       <button type="button" id="saveMy">💾<span class="lbl"> 一時保存</span></button><span id="autoNote" class="autonote"></span>
     </div>
+    <div id="sampleHint" class="sample-hint" hidden><b>✏ ピンクの点線の文字は「サンプル」です</b><span>あなた自身で、名前・日付などに書き換えてください。</span><button type="button" id="sampleEdit">名前・日付を書き換える</button></div>
     <canvas id="cv" width="546" height="1056" aria-label="デザイン"></canvas>
     <p class="note" id="shapeNote"></p>
   </main>
@@ -456,6 +461,14 @@ function paint(c, s, forPrint){
     c.save(); caseClip(c, s); c.lineWidth = 2; c.strokeStyle = "#e5007f"; c.stroke(); c.restore();  // ケースの線
     // 選んでいるものの枠
     const b = bounds(sel);
+    if(!noFrame && !touch) st.texts.forEach((t, i) => {
+      if(!t.sample || t.stk) return; const bb = bounds(i); if(!bb) return;
+      c.save(); c.translate(bb.x * s, bb.y * s); c.rotate(bb.rot * Math.PI / 180);
+      c.setLineDash([5, 4]); c.lineWidth = 2; c.strokeStyle = "#e5007f"; c.strokeRect(-bb.w * s / 2 - 4, -bb.h * s / 2 - 2, bb.w * s + 8, bb.h * s + 4); c.setLineDash([]);
+      const r = Math.max(10, 17 * U * s * 1.9), bx = bb.w * s / 2 + 4, by = -bb.h * s / 2 - 2;
+      c.fillStyle = "#e5007f"; c.beginPath(); c.arc(bx, by, r, 0, 7); c.fill();
+      c.fillStyle = "#fff"; c.font = `800 ${r * 1.15}px sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("✏", bx, by + 1); c.restore();
+    });
     if(touch && brushPt && !noFrame){ c.save(); c.beginPath(); c.arc(brushPt.x * s, brushPt.y * s, touch.size / 2 * s, 0, 7); c.lineWidth = 2; c.strokeStyle = touch.mode === "erase" ? "#e5007f" : "#1f8fff"; c.stroke(); c.restore(); }
     if(b && tool !== "" && !noFrame && !touch){ c.save(); c.translate(b.x * s, b.y * s); c.rotate(b.rot * Math.PI / 180); c.setLineDash([6, 4]); c.strokeStyle = "#1f8fff"; c.lineWidth = 1.5; c.strokeRect(-b.w * s / 2, -b.h * s / 2, b.w * s, b.h * s); c.restore(); }
   }
@@ -472,6 +485,7 @@ function bounds(which){
   return null;
 }
 function draw(){
+  { const h = document.getElementById("sampleHint"); if(h) h.hidden = !st.texts.some(t => t.sample && !t.stk); }
   ctx.clearRect(0, 0, cv.width, cv.height);
   if(!st.photos.length){ // 写真がないときの案内
     paint(ctx, VIEW, false);
@@ -912,7 +926,7 @@ function drawSlot(c, s){
 function applyTemplate(t0){
   const t = Object.assign({}, t0, layoutFor(t0)); push(); st.bg = t.bg;
   st.texts = t.items.map(it => it.stk ? { stk: it.stk, text: "", color: it.color || (STICKERS.find(x => x.id === it.stk) || {}).c || "#ffffff", size: Math.round(it.s * Math.min(PW, PH) * 1.6), x: it.x * PW, y: it.y * PH, rot: 0 }
-    : { text: it.text, font: it.font, color: it.color, size: Math.round(it.s * PW), x: it.x * PW, y: it.y * PH, rot: 0, shadow: !!it.shadow });
+    : { text: it.text, font: it.font, color: it.color, size: Math.round(it.s * PW), x: it.x * PW, y: it.y * PH, rot: 0, shadow: !!it.shadow, sample: true });
   if(st.photos.length){ slotFit(st.photos[0], t.photo); selP = st.photos[0].id; sel = "photo"; pendingSlot = null; if(t.photo.cut && !(media[selP] || {}).cut){ toast("背景を消しています（はじめては少し時間がかかります）"); setTimeout(removeBg, 0); } } else { pendingSlot = t.photo; sel = null; }
   const fl = new Set(t.items.filter(i => i.font).map(i => i.font));
   const fin = () => { draw(); renderPanel(); }; fin();
@@ -1035,7 +1049,8 @@ function renderPanel(){
       const i = sel;
       const tx = panel.querySelector("#tx");
       tx.onfocus = () => push();
-      tx.oninput = () => { const w = [...tx.value].reduce((a, ch) => a + (/[ -~｡-ﾟ]/.test(ch) ? 1 : 2), 0); if(w > 20){ tx.value = st.texts[i].text; return; } st.texts[i].text = tx.value; draw(); };
+      tx.placeholder = "ここに名前や日付を入力";
+      tx.oninput = () => { const w = [...tx.value].reduce((a, ch) => a + (/[ -~｡-ﾟ]/.test(ch) ? 1 : 2), 0); if(w > 20){ tx.value = st.texts[i].text; return; } st.texts[i].text = tx.value; st.texts[i].sample = false; draw(); };
       panel.querySelector("#tf").onchange = e => { push(); st.texts[i].font = e.target.value; draw(); const f = P.fonts.find(x => x.id === e.target.value); if(f && document.fonts) document.fonts.load(`${f.weight || 400} 40px ${f.family}`, "あA").then(draw); };
       panel.querySelectorAll("#tc button").forEach(b => b.onclick = () => { push(); st.texts[i].color = b.dataset.c; draw(); renderPanel(); });
       panel.querySelector("#tcFree").onchange = e => { push(); st.texts[i].color = e.target.value; draw(); renderPanel(); };
@@ -1133,8 +1148,19 @@ function renderPanel(){
 function syncSliders(){ const sc = document.getElementById("sc"), rt = document.getElementById("rt"); if(sc && cur()){ sc.value = Math.round(cur().scale * 100); rt.value = Math.round(cur().rot); } }
 
 /* ===== デザインの確認 → カートへ ===== */
+let sampleOk = false;
+document.getElementById("sampleEdit").onclick = () => {
+  const i = st.texts.findIndex(t => t.sample && !t.stk); if(i < 0) return;
+  sel = i; tool = "text"; document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", x.dataset.tool === "text")); renderPanel(); draw();
+  setTimeout(() => { const tx = document.getElementById("tx"); if(tx){ tx.focus(); tx.select(); } }, 250);
+};
 document.getElementById("confirmBtn").onclick = () => {
   if(!st.photos.length){ toast("写真を入れてください"); tool = "photo"; renderPanel(); return; }
+  const si = st.texts.findIndex(t => t.sample && !t.stk);
+  if(si >= 0 && !sampleOk){
+    if(!confirm("サンプルの文字（「" + st.texts[si].text + "」など）が、そのままです。\nこのまま注文に進みますか？\n\n［OK］このまま進む　［キャンセル］文字を直す")){ sel = si; tool = "text"; document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", x.dataset.tool === "text")); renderPanel(); draw(); return; }
+    sampleOk = true;
+  }
   if(anyUploading()){ toast("写真を送信中です。少しお待ちください"); return; }
   const bad = st.photos.findIndex(p => !media[p.id].fileId);
   if(bad >= 0){ toast("写真" + NUM(bad) + "の送信に失敗しています。その写真を消して、選び直してください"); selP = st.photos[bad].id; sel = "photo"; tool = "photo"; renderPanel(); draw(); return; }
