@@ -86,7 +86,7 @@ window.LICO_SHOP = {
       id: "memorial", kind: "none", series: "PET MEMORIAL SERIES",
       name: "ペットのメモリアルボード（アクリル）", short: "ペットのメモリアル", price: 5500,
       lead: "虹の橋をわたった、大切な家族の写真を、アクリルボードにのこします。\nテンプレートをえらんで、お名前やメッセージを入れるだけ。お部屋にそっと飾れます。",
-      images: ["img/memorial.jpg?v=1120c"], optionLabel: "",
+      images: ["img/memorial.jpg?v=1120d"], optionLabel: "",
       points: ["透明なアクリル製のメモリアルボード（横10×縦15cm・立てかけて飾れます）", "メモリアル向けのテンプレートから選べます", "お名前・日付・メッセージを入れられます"],
       print: { w: 1000, h: 1500, shape: "round", r: 40, base: "clear", baseLabel: "透明のアクリルのまま（印刷しない）" },
       note: "アクリルは透明なので、写真を置かない部分は透けて見えます。背景をえらぶと、全面にプリントされます。"
