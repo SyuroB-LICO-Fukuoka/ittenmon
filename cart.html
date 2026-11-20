@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/shop.css?v=1101a">
+<link rel="stylesheet" href="css/shop.css?v=1121a">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#ffffff">
 <link rel="apple-touch-icon" href="img/app/shop-180.png">
@@ -33,7 +33,7 @@
   const {S, yen, esc, isCafe, cafeId, getCart, setCart, subtotal, shipping, api, toast, chrome, qs, product, unitPrice, optionText} = window.LICO;
   chrome();
   const cafe = isCafe();
-  const f = { pay: cafe ? "cash" : "card", name:"", kana:"", email:"", tel:"", delivery: cafe ? "pickup" : "ship", zip:"", address:"", note:"", agree:false, coupon:"", couponMsg:"" };
+  const f = { pay: cafe ? "cash" : "card", name:"", kana:"", email:"", tel:"", delivery: cafe ? "pickup" : "ship", zip:"", address:"", note:"", agree:false, gallery:"ng", coupon:"", couponMsg:"" };
   // クーポン：いちばん高い商品1個分が0円になる（本当に使えるかは注文のときにサーバーで確かめる）
   const couponOff = () => f.coupon ? Math.max(0, ...getCart().map(i => unitPrice(i))) : 0;
   const $ = s => document.querySelector(s);
@@ -98,6 +98,10 @@
           <div><span>送料</span><span>${ship?yen(ship):"無料"}</span></div>
           <div class="grand"><span>合計（税込）</span><span>${yen(total)}</span></div>
         </div>
+        <div class="fld gal"><label>作品のギャラリー掲載について<span class="req">ご確認</span></label>
+          <p class="help" style="font-size:12.5px;line-height:1.7">できあがった作品の写真を、ITTENMONのギャラリーやSNSでご紹介してもよろしいですか？お名前・ご連絡先・ご住所は載せません。ご注文のあとでも、LINEかメールでご連絡いただければ、変更・取り下げができます。</p>
+          <div class="radios"><label class="radio"><input type="radio" name="c-gal" value="ok" ${f.gallery==="ok"?"checked":""}><span><b>掲載してもよい</b><small>お名前を伏せて紹介します</small></span></label>
+          <label class="radio"><input type="radio" name="c-gal" value="ng" ${f.gallery!=="ok"?"checked":""}><span><b>掲載しない</b><small>ご自分用としてだけ、おつくりします</small></span></label></div></div>
         <label class="check"><input type="checkbox" id="c-agree" ${f.agree?"checked":""}> <span><a href="tokushoho.html" target="_blank" style="text-decoration:underline">特定商取引法に基づく表記</a>と<a href="tokushoho.html#privacy" target="_blank" style="text-decoration:underline">プライバシーポリシー</a>に同意します</span></label>
         <div id="msg"></div>
         <button class="btn btn-block" type="submit" id="go">${goLabel(free)}</button>
@@ -113,6 +117,7 @@
     const v = id => { const el=document.getElementById(id); return el ? el.value.trim() : ""; };
     f.name=v("c-name"); f.kana=v("c-kana"); f.tel=half(v("c-tel")); f.email=half(v("c-email")); f.note=document.getElementById("c-note")?.value||"";
     if(document.getElementById("c-zip")){ f.zip=v("c-zip"); f.address=v("c-addr"); }
+    f.gallery=(document.querySelector('input[name="c-gal"]:checked')||{}).value||f.gallery;
     f.agree=!!document.getElementById("c-agree")?.checked;
   }
 
@@ -166,7 +171,7 @@
       const r = await api({ action:"createOrder", mode: cafe?"cafe":"online", cafeId: cafeId(),
         items: cart.map(i=>({productId:i.productId||"phone", variant:i.variant||"", model:optionText(i)||product(i.productId||"phone").short, fileId:i.fileId, fileIds:i.fileIds||[i.fileId], designFileId:i.designFileId, previewFileId:i.previewFileId||"", text:i.text, font:i.font, color:i.color, qty:i.qty})),
         customer: {name:f.name, kana:f.kana, tel:f.tel, email:f.email, zip:f.zip, address:f.address, note:f.note},
-        delivery: f.delivery, payMethod: f.pay, coupon: f.coupon });
+        delivery: f.delivery, payMethod: f.pay, coupon: f.coupon, gallery: f.gallery });
       try{ localStorage.setItem("ittenmon-last-tel4", String(f.tel).replace(/\D/g, "").slice(-4)); localStorage.setItem("ittenmon-last-order", r.orderNo); }catch(_){}
       if(r.checkoutUrl){ location.href = r.checkoutUrl; return; }
       setCart([]);

@@ -196,3 +196,27 @@ footer.site{background:var(--text);color:#ddd;padding:48px 0 24px;font-size:13px
   body.has-tabbar .cb-btn{bottom:calc(72px + env(safe-area-inset-bottom,0px))!important;padding:11px 15px!important}
   body.has-tabbar .cb{bottom:calc(72px + env(safe-area-inset-bottom,0px))!important;height:min(560px,calc(100dvh - 150px))!important}
 }
+
+/* ギャラリー掲載の確認（スマホで押しやすい大きさ） */
+.radios{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.radio{display:flex;gap:12px;align-items:center;padding:12px 14px;min-height:56px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer}
+.radio input{width:22px;height:22px;flex:none;accent-color:var(--text,#222)}
+.radio span{display:flex;flex-direction:column;line-height:1.5}
+.radio small{color:var(--sub);font-size:12px}
+.radio:has(input:checked){border-color:var(--text,#222);background:#f7f6f3}
+
+/* ===== スマホ：親指が届く固定ボタン ===== */
+.sticky-cta{display:none}
+@media(max-width:959px){
+  .sticky-cta{display:flex;align-items:center;gap:14px;position:fixed;left:0;right:0;bottom:calc(60px + env(safe-area-inset-bottom,0px));z-index:55;background:rgba(255,255,255,.98);border-top:1px solid var(--line);padding:10px max(14px,env(safe-area-inset-right,0px)) 10px max(14px,env(safe-area-inset-left,0px));box-shadow:0 -6px 18px rgba(0,0,0,.08)}
+  .sticky-cta .p{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+  .sticky-cta .p b{font-size:19px}
+  .sticky-cta .p small{font-size:11px;color:var(--sub);white-space:nowrap}
+  .sticky-cta .big-btn{flex:1;min-height:52px;margin:0;border-radius:12px;font-size:16px;font-weight:700}
+  body.has-sticky-cta{padding-bottom:calc(60px + 76px + env(safe-area-inset-bottom,0px))}
+  body.has-sticky-cta .cb-btn{bottom:calc(144px + env(safe-area-inset-bottom,0px))!important}
+  /* カート：お支払いボタンを、入力中も下に出しておく */
+  #go.btn-block{position:sticky;bottom:calc(60px + env(safe-area-inset-bottom,0px) + 10px);z-index:20;min-height:54px;font-size:16px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.22)}
+  /* 入力欄：指で押しやすく、ズームされない大きさ */
+  .fld input,.fld textarea,.fld select{min-height:48px;font-size:16px}
+}
