@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Jost:wght@400;500;600&family=Zen+Maru+Gothic:wght@500;700&family=M+PLUS+Rounded+1c:wght@800&family=Noto+Serif+JP:wght@700&family=Shippori+Mincho:wght@600&family=Klee+One:wght@600&family=Yomogi&family=Kaisei+Decol:wght@700&family=Dancing+Script:wght@600&family=Great+Vibes&family=Pacifico&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/shop.css?v=1121h">
+<link rel="stylesheet" href="css/shop.css?v=1121k">
 <style>
 /* 編集画面：左に道具の切り替え、その隣に道具パネル、中央にケース */
 html,body{height:100%}
@@ -16,7 +16,7 @@ body{display:flex;flex-direction:column;background:#f1f0ed}
 .ed-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--line)}
 .ed-top .logo{font-size:16px}
 .ed-top .model{font-size:13px;color:var(--sub)}
-.ed-top .go{background:var(--text);color:#fff;border:0;padding:10px 20px;font-size:14px;cursor:pointer;letter-spacing:.06em}
+.ed-top .go{background:linear-gradient(180deg,#2d8cff,#0f62e6);color:#fff;border:0;border-radius:10px;padding:12px 24px;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.06em;box-shadow:0 4px 14px rgba(15,98,230,.4)}
 .ed-top .go:hover{background:var(--accent)}
 .ed{flex:1;display:grid;grid-template-columns:72px 280px 1fr;min-height:0}
 .rail{background:#2b2b2b;display:flex;flex-direction:column;padding-top:8px}
@@ -91,7 +91,7 @@ canvas#cv{touch-action:none;max-width:100%;max-height:calc(100vh - 200px);cursor
   .ed-top{padding:6px 14px;min-height:40px;gap:8px;border-bottom:1px solid var(--line)}
   .ed-top .logo{display:none}
   .ed-top .model{flex:1;min-width:0;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .ed-top .go{position:fixed;right:max(10px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 6px);z-index:40;height:48px;min-width:112px;padding:0 16px;border-radius:12px;font-size:15px;font-weight:700;letter-spacing:.02em;background:var(--accent);box-shadow:0 4px 14px rgba(0,0,0,.25)}
+  .ed-top .go{position:fixed;right:max(10px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 6px);z-index:40;height:52px;min-width:124px;padding:0 16px;border-radius:12px;font-size:16px;font-weight:800;letter-spacing:.02em;background:linear-gradient(180deg,#2d8cff,#0f62e6);box-shadow:0 4px 14px rgba(15,98,230,.5)}
   .ed{flex:1;min-height:0;grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto auto}
   .stage{order:1;padding:6px 10px;gap:6px;min-height:0;overflow:hidden;justify-content:flex-start}
   .tools{flex-wrap:nowrap;gap:6px;justify-content:center}
@@ -113,7 +113,7 @@ canvas#cv{touch-action:none;max-width:100%;max-height:calc(100vh - 200px);cursor
   .cutq{background:#1f8fff!important;color:#fff!important;border-color:#1f8fff!important;font-weight:700;padding:8px 14px!important;flex:1 1 auto}
   .cutq.on{background:#fff!important;color:#1f8fff!important}
   .toast{top:calc(46px + env(safe-area-inset-top,0px))!important;bottom:auto!important;max-width:86vw}
-  .rail{order:3;flex-direction:row;justify-content:flex-start;padding:0 calc(132px + max(10px,env(safe-area-inset-right,0px))) env(safe-area-inset-bottom,0px) 0;background:#2b2b2b;min-height:calc(56px + env(safe-area-inset-bottom,0px))}
+  .rail{order:3;flex-direction:row;justify-content:flex-start;padding:0 calc(140px + max(10px,env(safe-area-inset-right,0px))) env(safe-area-inset-bottom,0px) 0;background:#2b2b2b;min-height:calc(56px + env(safe-area-inset-bottom,0px))}
   .rail button{flex:1;padding:7px 0;font-size:10px;letter-spacing:-.04em;white-space:nowrap;min-height:56px;gap:2px}
   .rail button svg{width:22px;height:22px}
   /* テンプレート・背景は横にスワイプして選ぶ（キャンバスを広く使うため） */
