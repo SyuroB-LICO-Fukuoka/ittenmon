@@ -78,6 +78,7 @@ canvas#cv{touch-action:none;max-width:100%;max-height:calc(100vh - 200px);cursor
 .tpl button[aria-pressed="true"]{border-color:var(--text);background:#f7f6f3}
 .tpl img{width:100%;max-width:96px;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
 .tpl.bgs{grid-template-columns:repeat(3,1fr)}
+.tpl.flt img{width:100%;aspect-ratio:1;object-fit:cover}
 .sheet-head{display:none}
 /* スマホ：道具を下に */
 @media(max-width:820px){
@@ -110,13 +111,14 @@ canvas#cv{touch-action:none;max-width:100%;max-height:calc(100vh - 200px);cursor
   .cutq.on{background:#fff!important;color:#1f8fff!important}
   .toast{top:calc(46px + env(safe-area-inset-top,0px))!important;bottom:auto!important;max-width:86vw}
   .rail{order:3;flex-direction:row;justify-content:flex-start;padding:0 calc(132px + max(10px,env(safe-area-inset-right,0px))) env(safe-area-inset-bottom,0px) 0;background:#2b2b2b;min-height:calc(56px + env(safe-area-inset-bottom,0px))}
-  .rail button{flex:1;padding:7px 2px;font-size:10.5px;min-height:56px;gap:2px}
+  .rail button{flex:1;padding:7px 0;font-size:10px;letter-spacing:-.04em;white-space:nowrap;min-height:56px;gap:2px}
   .rail button svg{width:22px;height:22px}
   /* テンプレート・背景は横にスワイプして選ぶ（キャンバスを広く使うため） */
   .panel[data-tool="tmpl"] .help,.panel[data-tool="bg"] .help{display:none}
   .panel[data-tool="tmpl"] .tpl,.panel[data-tool="bg"] .tpl{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;overflow:visible;margin-top:4px;padding-bottom:16px}
   .tpl button{min-height:44px;padding:6px 4px}
   .tpl img{max-width:100%}
+  .tpl.flt{grid-template-columns:repeat(3,1fr)}
   /* 押しやすい大きさ */
   .btns button,.layers button,.row select,.row input[type=text]{min-height:44px;font-size:14px}
   .row input[type=range]{height:34px}
@@ -150,6 +152,7 @@ canvas#cv{touch-action:none;max-width:100%;max-height:calc(100vh - 200px);cursor
   <nav class="rail" aria-label="道具">
     <button type="button" data-tool="tmpl" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>テンプレ</button>
     <button type="button" data-tool="photo" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg>写真</button>
+    <button type="button" data-tool="filter" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg>フィルター</button>
     <button type="button" data-tool="text" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 6h14M12 6v13M9 19h6"/></svg>テキスト</button>
     <button type="button" data-tool="bg" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 7-7 7-7-7z"/><path d="M19 15c0 1.5 1 2.5 1 3.5a1 1 0 0 1-2 0c0-1 1-2 1-3.5z"/></svg>背景</button>
   </nav>
@@ -227,19 +230,21 @@ const FRAMES = [
 ];
 // 写真の色味（プリクラ風フィルター）
 const FILTERS = {
-  none: { label: "そのまま", css: "none" },
-  soft: { label: "ふんわり", css: "brightness(1.08) contrast(0.9) saturate(1.1)" },
-  bright: { label: "美白", css: "brightness(1.18) contrast(0.92) saturate(0.95)" },
-  vivid: { label: "あざやか", css: "saturate(1.45) contrast(1.08)" },
-  pastel: { label: "パステル", css: "brightness(1.12) saturate(0.7) contrast(0.88)" },
-  pink: { label: "ゆめかわ", css: "sepia(0.25) hue-rotate(300deg) saturate(1.35) brightness(1.06)" },
-  sepia: { label: "セピア", css: "sepia(0.85)" },
-  mono: { label: "モノクロ", css: "grayscale(1) contrast(1.05)" }
+  none: { label: "そのまま" },
+  mono: { label: "モノクロ" },
+  monoH: { label: "くっきり白黒" },
+  monoS: { label: "やわらか白黒" },
+  sepia: { label: "セピア" },
+  soft: { label: "ふんわり" },
+  bright: { label: "美白" },
+  vivid: { label: "あざやか" },
+  pastel: { label: "パステル" },
+  pink: { label: "ゆめかわ" }
 };
 // ブラウザの機能（ctx.filter）に頼らず、色を直接計算する（iPhoneのSafariでも、書き出しでも、同じ仕上がり）
 const FOPS = {
   soft: [["b", 1.08], ["c", .9], ["s", 1.1]], bright: [["b", 1.18], ["c", .92], ["s", .95]], vivid: [["s", 1.45], ["c", 1.08]],
-  pastel: [["b", 1.12], ["s", .7], ["c", .88]], pink: [["sepia", .12], ["hue", 335], ["s", 1.2], ["b", 1.06]], sepia: [["sepia", .85]], mono: [["gray", 1], ["c", 1.05]]
+  pastel: [["b", 1.12], ["s", .7], ["c", .88]], pink: [["sepia", .12], ["hue", 335], ["s", 1.2], ["b", 1.06]], sepia: [["sepia", .85]], mono: [["gray", 1], ["c", 1.05]], monoH: [["gray", 1], ["c", 1.38], ["b", 1.04]], monoS: [["gray", 1], ["c", .84], ["b", 1.1]]
 };
 function mat3(px, i, M){ const r = px[i], g = px[i + 1], b = px[i + 2]; px[i] = M[0] * r + M[1] * g + M[2] * b; px[i + 1] = M[3] * r + M[4] * g + M[5] * b; px[i + 2] = M[6] * r + M[7] * g + M[8] * b; }
 function filterMatrix(op, v){
@@ -250,12 +255,8 @@ function filterMatrix(op, v){
     return [.213 + cs * .787 - sn * .213, .715 - cs * .715 - sn * .715, .072 - cs * .072 + sn * .928, .213 - cs * .213 + sn * .143, .715 + cs * .285 + sn * .140, .072 - cs * .072 - sn * .283, .213 - cs * .213 - sn * .787, .715 - cs * .715 + sn * .715, .072 + cs * .928 + sn * .072]; }
   return null;
 }
-function filteredSource(m, fid){
-  if(!fid || fid === "none" || !FOPS[fid]) return m.img;
-  if(m._fc && m._fc.img === m.img && m._fc.f === fid) return m._fc.cv;
-  const src = m.img, sc = Math.min(1, 2400 / Math.max(src.naturalWidth, src.naturalHeight)), w = Math.round(src.naturalWidth * sc), h = Math.round(src.naturalHeight * sc);
-  const cv2 = document.createElement("canvas"); cv2.width = w; cv2.height = h; const x = cv2.getContext("2d"); x.drawImage(src, 0, 0, w, h);
-  const id = x.getImageData(0, 0, w, h), px = id.data, ops = FOPS[fid].map(([op, v]) => [op, v, filterMatrix(op, v)]);
+function runFilter(cv2, fid){
+  const x = cv2.getContext("2d"), w = cv2.width, h = cv2.height, id = x.getImageData(0, 0, w, h), px = id.data, ops = FOPS[fid].map(([op, v]) => [op, v, filterMatrix(op, v)]);
   for(let i = 0; i < px.length; i += 4){
     for(let k = 0; k < ops.length; k++){
       const [op, v, M] = ops[k];
@@ -265,7 +266,22 @@ function filteredSource(m, fid){
       px[i] = px[i] < 0 ? 0 : px[i] > 255 ? 255 : px[i]; px[i + 1] = px[i + 1] < 0 ? 0 : px[i + 1] > 255 ? 255 : px[i + 1]; px[i + 2] = px[i + 2] < 0 ? 0 : px[i + 2] > 255 ? 255 : px[i + 2];
     }
   }
-  x.putImageData(id, 0, 0); m._fc = { img: src, f: fid, cv: cv2 }; return cv2;
+  x.putImageData(id, 0, 0);
+}
+function filteredSource(m, fid){
+  if(!fid || fid === "none" || !FOPS[fid]) return m.img;
+  if(m._fc && m._fc.img === m.img && m._fc.f === fid) return m._fc.cv;
+  const src = m.img, sc = Math.min(1, 2400 / Math.max(src.naturalWidth, src.naturalHeight)), w = Math.round(src.naturalWidth * sc), h = Math.round(src.naturalHeight * sc);
+  const cv2 = document.createElement("canvas"); cv2.width = w; cv2.height = h; cv2.getContext("2d").drawImage(src, 0, 0, w, h);
+  runFilter(cv2, fid); m._fc = { img: src, f: fid, cv: cv2 }; return cv2;
+}
+// フィルターの見本（いまの写真に、実際にかけた小さな絵）
+function filterThumb(m, fid){
+  const src = m.img, sc = 140 / Math.max(src.naturalWidth, src.naturalHeight), w = Math.max(1, Math.round(src.naturalWidth * sc)), h = Math.max(1, Math.round(src.naturalHeight * sc));
+  const k = document.createElement("canvas"); k.width = w; k.height = h; const x = k.getContext("2d");
+  x.fillStyle = "#eee"; x.fillRect(0, 0, w, h); x.drawImage(src, 0, 0, w, h);
+  if(fid !== "none" && FOPS[fid]) runFilter(k, fid);
+  return k.toDataURL("image/jpeg", .8);
 }
 // 切り抜いた写真の形のシルエット（白フチ用）
 const silCache = new Map();
@@ -766,7 +782,7 @@ function renderPanel(){
       <div class="row"><label for="sc">大きさ</label><input type="range" id="sc" min="5" max="400" value="${Math.round(p.scale * 100)}"></div>
       <div class="row"><label for="rt">回転</label><input type="range" id="rt" min="-180" max="180" value="${Math.round(p.rot)}"></div>
       <div class="btns"><button type="button" id="fit">全体に合わせる</button><button type="button" id="ctr">中央にそろえる</button><button type="button" id="r90">90°回す</button></div>
-      <div class="row"><label>色味（フィルター）</label><div class="btns" id="flt">${Object.entries(FILTERS).map(([id, f]) => `<button type="button" data-flt="${id}" style="${(p.filter || "none") === id ? "border-color:var(--text);background:#f7f6f3" : ""}">${f.label}</button>`).join("")}</div></div>
+      <button class="btn btn-line" type="button" id="toFilter" style="width:100%;min-height:50px">◐ モノクロなどのフィルターを選ぶ ›</button>
       <div class="row"><label>ふちどり${m.cut && (p.shape || "rect") === "rect" ? "（切り抜いた形にそって付きます）" : ""}</label>
         <div class="btns" id="bw">${[["なし", 0], ["細い", 10], ["ふつう", 22], ["太い", 40]].map(([l, w]) => `<button type="button" data-bw="${w}" style="${((p.border || {}).w || 0) === w ? "border-color:var(--text);background:#f7f6f3" : ""}">${l}</button>`).join("")}</div>
         ${(p.border || {}).w ? `<div class="btns" id="bs">${[["solid", "線"], ["double", "二重線"], ["dash", "点線"], ["dot", "水玉"]].map(([v, l]) => `<button type="button" data-bs="${v}" style="${(p.border.style || "solid") === v ? "border-color:var(--text);background:#f7f6f3" : ""}">${l}</button>`).join("")}</div>
@@ -799,6 +815,7 @@ function renderPanel(){
       const cb = panel.querySelector("#cut"), ub = panel.querySelector("#uncut");
       if(cb) cb.onclick = removeBg;
       if(ub) ub.onclick = () => { m.img = m.orig; m.cut = false; draw(); renderPanel(); };
+      const tf = panel.querySelector("#toFilter"); if(tf) tf.onclick = () => { tool = "filter"; document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", x.dataset.tool === "filter")); renderPanel(); };
       const er = panel.querySelector("#cutEr"); if(er) er.oninput = () => setErode(+er.value);
       panel.querySelector("#pdel").onclick = () => { push(); st.photos.splice(st.photos.indexOf(p), 1); const top = st.photos[st.photos.length - 1]; selP = top ? top.id : null; sel = top ? "photo" : null; draw(); renderPanel(); };
     }
@@ -864,6 +881,19 @@ function renderPanel(){
     panel.innerHTML = `<div class="sheet-head"><h2>テンプレートを選ぶ</h2><button type="button" id="sheetClose">閉じる</button></div><h2 class="d-only">テンプレート</h2><p class="help">好きなデザインを押すと、背景・写真の枠・文字がまとめて入ります。写真や文字は、あとから自由に変えられます。まちがえたら「元に戻す」で戻せます。</p>
       <div class="tpl">${TPL.map(t => `<button type="button" data-t="${t.id}"><img src="${tmplThumb(t)}" alt=""><span>${esc(t.label)}</span></button>`).join("")}</div>`;
     panel.querySelectorAll("[data-t]").forEach(b => b.onclick = () => applyTemplate(TPL.find(x => x.id === b.dataset.t)));
+  } else if(tool === "filter"){
+    const p = cur(), m = curM();
+    if(!p){
+      panel.innerHTML = `<div class="sheet-head"><h2>写真のフィルター</h2><button type="button" id="sheetClose">閉じる</button></div><h2 class="d-only">フィルター</h2>
+        <p class="help" style="font-size:13px">フィルターをかけるには、先に写真を入れてください。</p>
+        <button class="btn" type="button" id="goPhoto" style="width:100%;min-height:52px">写真を入れる</button>`;
+      panel.querySelector("#goPhoto").onclick = () => { tool = "photo"; document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", x.dataset.tool === "photo")); renderPanel(); };
+    } else {
+      panel.innerHTML = `<div class="sheet-head"><h2>写真のフィルター</h2><button type="button" id="sheetClose">閉じる</button></div><h2 class="d-only">フィルター</h2>
+        <p class="help">タップすると、いまの写真に、すぐかかります。何度でも変えられます。</p>
+        <div class="tpl flt">${Object.entries(FILTERS).map(([id, f]) => `<button type="button" data-f="${id}" aria-pressed="${(p.filter || "none") === id}"><img src="${filterThumb(m, id)}" alt=""><span>${esc(f.label)}</span></button>`).join("")}</div>`;
+      panel.querySelectorAll("[data-f]").forEach(b => b.onclick = () => { push(); p.filter = b.dataset.f; draw(); const t = panel.scrollTop; renderPanel(); panel.scrollTop = t; });
+    }
   } else if(tool === "bg"){
     const cur = String(st.bg || "").indexOf("bg:") === 0 ? st.bg.slice(3) : "";
     const isHex = typeof st.bg === "string" && st.bg.charAt(0) === "#";
