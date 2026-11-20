@@ -62,6 +62,7 @@
               <span class="amt">${yen(unitPrice(i)*i.qty)}</span>
               <button class="rm" type="button" data-rm="${i.key}">削除</button>
             </div>
+            ${i.editUrl?`<a class="btn edit-back" href="${esc(i.editUrl)}">✏️ 編集ページに戻って直す</a>`:""}
           </div>
         </div>`).join("")}
         <p style="margin-top:16px"><a href="product.html" style="text-decoration:underline;font-size:14px">＋ 別の写真・別の商品でもうひとつ作る</a></p>
