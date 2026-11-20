@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Jost:wght@400;500;600&family=Zen+Maru+Gothic:wght@500;700&family=M+PLUS+Rounded+1c:wght@800&family=Noto+Serif+JP:wght@700&family=Shippori+Mincho:wght@600&family=Klee+One:wght@600&family=Yomogi&family=Kaisei+Decol:wght@700&family=Dancing+Script:wght@600&family=Great+Vibes&family=Pacifico&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/shop.css?v=1121c">
+<link rel="stylesheet" href="css/shop.css?v=1121f">
 <style>
 /* 編集画面：左に道具の切り替え、その隣に道具パネル、中央にケース */
 html,body{height:100%}
@@ -25,6 +25,13 @@ body{display:flex;flex-direction:column;background:#f1f0ed}
 .rail button[aria-pressed="true"]{color:#fff;background:#3d3d3d}
 .panel{background:#fff;border-right:1px solid var(--line);padding:18px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
 .panel h2{font-size:15px}
+.cut-hero{display:flex;flex-direction:column;gap:8px;padding:12px;border:2px solid #1f8fff;border-radius:12px;background:#f2f8ff}
+.cut-main{min-height:52px;border:0;border-radius:10px;background:#1f8fff;color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+.cut-main.on{background:#fff;color:#1f8fff;border:2px solid #1f8fff}
+.cut-main:disabled{opacity:.6}
+.cutq{background:#1f8fff;color:#fff;border-color:#1f8fff}
+.cutq.on{background:#fff;color:#1f8fff}
+.cutq[hidden]{display:none}
 .panel h3.sub{font-size:13px;color:var(--sub);margin:6px 0 -4px;font-weight:700}
 .panel .help{font-size:12px;color:var(--sub)}
 .tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);background:#fff;padding:22px 10px;cursor:pointer;font-size:14px;border-radius:6px;position:relative}
@@ -93,6 +100,14 @@ canvas#cv{touch-action:none;max-width:100%;max-height:calc(100vh - 200px);cursor
   .sheet-head h2{font-size:16px}
   .sheet-head button{min-height:40px;padding:0 16px;border:1px solid var(--line);background:#fff;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer}
   .d-only{display:none}
+  /* 道具はすべて、下から出る選択画面（閉じているときはケースを広く） */
+  .panel{height:52dvh;max-height:none;border-radius:18px 18px 0 0;box-shadow:0 -10px 28px rgba(0,0,0,.2);padding-top:0}
+  .panel[data-tool=""]{display:none}
+  .tools .lbl{display:none}
+  .tools button{min-width:44px;padding:8px 14px}
+  .tools #saveMy{padding:8px 14px}
+  .cutq{background:#1f8fff!important;color:#fff!important;border-color:#1f8fff!important;font-weight:700;padding:8px 14px!important;flex:1 1 auto}
+  .cutq.on{background:#fff!important;color:#1f8fff!important}
   .toast{top:calc(46px + env(safe-area-inset-top,0px))!important;bottom:auto!important;max-width:86vw}
   .rail{order:3;flex-direction:row;justify-content:flex-start;padding:0 calc(132px + max(10px,env(safe-area-inset-right,0px))) env(safe-area-inset-bottom,0px) 0;background:#2b2b2b;min-height:calc(56px + env(safe-area-inset-bottom,0px))}
   .rail button{flex:1;padding:7px 2px;font-size:10.5px;min-height:56px;gap:2px}
@@ -141,9 +156,10 @@ canvas#cv{touch-action:none;max-width:100%;max-height:calc(100vh - 200px);cursor
   <aside class="panel" id="panel"></aside>
   <main class="stage">
     <div class="tools">
-      <button type="button" id="undo" disabled>↶ 元に戻す</button>
-      <button type="button" id="redo" disabled>↷ やり直し</button>
-      <button type="button" id="saveMy">♡ マイデザインに保存</button>
+      <button type="button" id="undo" disabled>↶<span class="lbl"> 元に戻す</span></button>
+      <button type="button" id="redo" disabled>↷<span class="lbl"> やり直し</span></button>
+      <button type="button" id="cutQuick" class="cutq" hidden>✂ 背景を消す</button>
+      <button type="button" id="saveMy">♡<span class="lbl"> マイデザインに保存</span></button>
     </div>
     <canvas id="cv" width="546" height="1056" aria-label="デザイン"></canvas>
     <p class="note" id="shapeNote"></p>
@@ -220,6 +236,37 @@ const FILTERS = {
   sepia: { label: "セピア", css: "sepia(0.85)" },
   mono: { label: "モノクロ", css: "grayscale(1) contrast(1.05)" }
 };
+// ブラウザの機能（ctx.filter）に頼らず、色を直接計算する（iPhoneのSafariでも、書き出しでも、同じ仕上がり）
+const FOPS = {
+  soft: [["b", 1.08], ["c", .9], ["s", 1.1]], bright: [["b", 1.18], ["c", .92], ["s", .95]], vivid: [["s", 1.45], ["c", 1.08]],
+  pastel: [["b", 1.12], ["s", .7], ["c", .88]], pink: [["sepia", .12], ["hue", 335], ["s", 1.2], ["b", 1.06]], sepia: [["sepia", .85]], mono: [["gray", 1], ["c", 1.05]]
+};
+function mat3(px, i, M){ const r = px[i], g = px[i + 1], b = px[i + 2]; px[i] = M[0] * r + M[1] * g + M[2] * b; px[i + 1] = M[3] * r + M[4] * g + M[5] * b; px[i + 2] = M[6] * r + M[7] * g + M[8] * b; }
+function filterMatrix(op, v){
+  if(op === "s") return [.213 + .787 * v, .715 - .715 * v, .072 - .072 * v, .213 - .213 * v, .715 + .285 * v, .072 - .072 * v, .213 - .213 * v, .715 - .715 * v, .072 + .928 * v];
+  if(op === "gray"){ const k = 1 - v; return [.2126 + .7874 * k, .7152 - .7152 * k, .0722 - .0722 * k, .2126 - .2126 * k, .7152 + .2848 * k, .0722 - .0722 * k, .2126 - .2126 * k, .7152 - .7152 * k, .0722 + .9278 * k]; }
+  if(op === "sepia"){ const k = 1 - v; return [.393 + .607 * k, .769 - .769 * k, .189 - .189 * k, .349 - .349 * k, .686 + .314 * k, .168 - .168 * k, .272 - .272 * k, .534 - .534 * k, .131 + .869 * k]; }
+  if(op === "hue"){ const a = v * Math.PI / 180, cs = Math.cos(a), sn = Math.sin(a);
+    return [.213 + cs * .787 - sn * .213, .715 - cs * .715 - sn * .715, .072 - cs * .072 + sn * .928, .213 - cs * .213 + sn * .143, .715 + cs * .285 + sn * .140, .072 - cs * .072 - sn * .283, .213 - cs * .213 - sn * .787, .715 - cs * .715 + sn * .715, .072 + cs * .928 + sn * .072]; }
+  return null;
+}
+function filteredSource(m, fid){
+  if(!fid || fid === "none" || !FOPS[fid]) return m.img;
+  if(m._fc && m._fc.img === m.img && m._fc.f === fid) return m._fc.cv;
+  const src = m.img, sc = Math.min(1, 2400 / Math.max(src.naturalWidth, src.naturalHeight)), w = Math.round(src.naturalWidth * sc), h = Math.round(src.naturalHeight * sc);
+  const cv2 = document.createElement("canvas"); cv2.width = w; cv2.height = h; const x = cv2.getContext("2d"); x.drawImage(src, 0, 0, w, h);
+  const id = x.getImageData(0, 0, w, h), px = id.data, ops = FOPS[fid].map(([op, v]) => [op, v, filterMatrix(op, v)]);
+  for(let i = 0; i < px.length; i += 4){
+    for(let k = 0; k < ops.length; k++){
+      const [op, v, M] = ops[k];
+      if(M) mat3(px, i, M);
+      else if(op === "b"){ px[i] *= v; px[i + 1] *= v; px[i + 2] *= v; }
+      else if(op === "c"){ const o = 127.5 * (1 - v); px[i] = px[i] * v + o; px[i + 1] = px[i + 1] * v + o; px[i + 2] = px[i + 2] * v + o; }
+      px[i] = px[i] < 0 ? 0 : px[i] > 255 ? 255 : px[i]; px[i + 1] = px[i + 1] < 0 ? 0 : px[i + 1] > 255 ? 255 : px[i + 1]; px[i + 2] = px[i + 2] < 0 ? 0 : px[i + 2] > 255 ? 255 : px[i + 2];
+    }
+  }
+  x.putImageData(id, 0, 0); m._fc = { img: src, f: fid, cv: cv2 }; return cv2;
+}
 // 切り抜いた写真の形のシルエット（白フチ用）
 const silCache = new Map();
 function silhouette(img, W, H, color, bw){
@@ -321,12 +368,10 @@ function paint(c, s, forPrint){
     const W = p.w * p.scale * s, H = p.h * p.scale * s, k = p.shape || "rect", b = p.border, bw = b && b.w ? b.w * s : 0, solid = bw && (b.style || "solid") === "solid";
     c.save(); c.translate(p.x * s, p.y * s); c.rotate(p.rot * Math.PI / 180);
     const sticker = bw && m.cut && k === "rect";   // 切り抜いた写真：形にそって白フチ（プリクラ風）
-    if(sticker){ const sil = silhouette(m.img, W, H, b.color, bw); for(let i = 0; i < 16; i++){ const a = i * Math.PI / 8; c.drawImage(sil, -W / 2 - bw + Math.cos(a) * bw, -H / 2 - bw + Math.sin(a) * bw); } c.drawImage(sil, -W / 2 - bw, -H / 2 - bw); }
+    if(sticker){ const sil = silhouette(m.img, W, H, b.color, bw); for(let r = 1; r <= 3; r++){ const rr = bw * r / 3, n = 56; for(let i = 0; i < n; i++){ const a = i * Math.PI * 2 / n; c.drawImage(sil, -W / 2 - bw + Math.cos(a) * rr, -H / 2 - bw + Math.sin(a) * rr); } } c.drawImage(sil, -W / 2 - bw, -H / 2 - bw); }
     else if(solid){ frameShape(c, k, W, H); c.fillStyle = b.color; c.fill(); c.lineWidth = bw * 2; c.strokeStyle = b.color; c.lineJoin = "round"; c.stroke(); }   // 外側にだけ見えるふちどり
     if(k !== "rect"){ frameShape(c, k, W, H); c.save(); c.clip(); }
-    if(p.filter && FILTERS[p.filter]) c.filter = FILTERS[p.filter].css;
-    c.drawImage(m.img, -W / 2, -H / 2, W, H);
-    c.filter = "none";
+    c.drawImage(filteredSource(m, p.filter), -W / 2, -H / 2, W, H);
     if(k !== "rect") c.restore();
     if(bw && !solid && !sticker){
       const lw = b.w * s; c.strokeStyle = b.color; c.lineJoin = "round"; c.lineCap = "round";
@@ -379,7 +424,7 @@ function draw(){
     paint(ctx, VIEW, false);
     if(pendingSlot){ drawSlot(ctx, VIEW); return; }
     ctx.save(); ctx.fillStyle = SH.base && !st.bg && /^#[0-4]/.test(SH.base) ? "#dddddd" : "#8d887e"; ctx.font = "15px 'Noto Sans JP'"; ctx.textAlign = "center";
-    ctx.fillText("左の「写真をえらぶ」から", cv.width / 2, cv.height / 2 - 10); ctx.fillText("写真を入れてください", cv.width / 2, cv.height / 2 + 14); ctx.restore();
+    ctx.fillText((window.innerWidth <= 820 ? "下の「写真」" : "左の「写真をえらぶ」") + "から", cv.width / 2, cv.height / 2 - 10); ctx.fillText("写真を入れてください", cv.width / 2, cv.height / 2 + 14); ctx.restore();
     return;
   }
   paint(ctx, VIEW, false);
@@ -402,8 +447,9 @@ cv.addEventListener("pointerdown", e => {
   cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, toDesign(e));
   if(pts.size === 1){
     const pt = toDesign(e); let h = hit(pt); if(h === null) return;
-    if(typeof h === "string" && h.startsWith("p:")){ const id = h.slice(2); h = "photo"; if(id !== selP || sel !== "photo"){ selP = id; sel = "photo"; if(tool !== "photo"){ tool = "photo"; document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", x.dataset.tool === "photo")); } renderPanel(); } }
-    else if(h !== sel){ sel = h; const want = st.texts[h] && st.texts[h].stk ? "deco" : "text"; if(tool !== want){ tool = want; document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", x.dataset.tool === want)); } renderPanel(); }
+    const shut = window.innerWidth <= 820 && tool === "";
+    if(typeof h === "string" && h.startsWith("p:")){ const id = h.slice(2); h = "photo"; if(id !== selP || sel !== "photo"){ selP = id; sel = "photo"; if(!shut && tool !== "photo"){ tool = "photo"; document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", x.dataset.tool === "photo")); } renderPanel(); } }
+    else if(h !== sel){ sel = h; const want = st.texts[h] && st.texts[h].stk ? "deco" : "text"; if(!shut && tool !== want){ tool = want; document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", x.dataset.tool === want)); } renderPanel(); }
     const o = h === "photo" ? cur() : st.texts[h];
     drag = { start: pt, ox: o.x, oy: o.y, moved: false };
   } else if(pts.size === 2 && sel === "photo" && cur()){
@@ -476,6 +522,23 @@ function setState(t, bad){ const el = document.getElementById("photoState"); if(
 function photoStateText(){ const m = curM(); return m.uploading ? "写真を送っています…" : m.err ? m.err : m.fileId ? "写真を受け付けました" : ""; }
 
 /* ===== 背景透過（ブラウザの中だけで処理。写真はほかの会社に送られない） ===== */
+// 切り抜き結果の仕上げ：半透明のもやを消し、ふちを内側へけずる（er＝0〜4）
+async function refineAlpha(img, er){
+  const w = img.naturalWidth, h = img.naturalHeight, c = document.createElement("canvas"); c.width = w; c.height = h;
+  const x = c.getContext("2d"); x.drawImage(img, 0, 0);
+  const d0 = x.getImageData(0, 0, w, h), px = d0.data;
+  for(let i = 3; i < px.length; i += 4){ let a = px[i] / 255; a = a < .1 ? 0 : a > .9 ? 1 : (a - .1) / .8; px[i] = (a * a * (3 - 2 * a)) * 255; }
+  x.putImageData(d0, 0, 0);
+  if(er > 0){
+    const step = Math.max(1, Math.round(Math.max(w, h) / 1200));
+    for(let k = 0; k < er * 2; k++){
+      const t = document.createElement("canvas"); t.width = w; t.height = h; t.getContext("2d").drawImage(c, 0, 0);
+      [[step, 0], [-step, 0], [0, step], [0, -step]].forEach(([dx, dy]) => { x.globalCompositeOperation = "destination-in"; x.drawImage(t, dx, dy); });
+      x.globalCompositeOperation = "source-over";
+    }
+  }
+  const o = new Image(); o.src = c.toDataURL("image/png"); await o.decode(); return o;
+}
 async function removeBg(){
   const m = curM(); if(cutting || !m.orig) return;
   if(m.cutImg){ m.img = m.cutImg; m.cut = true; draw(); renderPanel(); return; }
@@ -483,17 +546,29 @@ async function removeBg(){
   try{
     const { removeBackground } = await import("https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm");
     const blob = await removeBackground(m.orig.src, {
-      model: "isnet_quint8", output: { format: "image/png" },
-      progress: (key, now, total) => { const el = document.getElementById("cutState"); if(el && total) el.textContent = "準備しています… " + Math.round(now / total * 100) + "%"; }
+      model: "isnet_fp16", output: { format: "image/png" },   // 高精度のモデル（はじめは読み込みに時間がかかります）
+      progress: (key, now, total) => { const el = document.getElementById("cutState"); if(el && total) el.textContent = "準備しています… " + Math.round(now / total * 100) + "%（はじめだけ、少し時間がかかります）"; }
     });
-    const ci = new Image(); ci.src = URL.createObjectURL(blob); await ci.decode();
-    m.cutImg = ci; m.img = ci; m.cut = true;
-    if(st.bg === "#ffffff") toast("背景を消しました。「背景色」から色を選べます");
+    const raw = new Image(); raw.src = URL.createObjectURL(blob); await raw.decode();
+    m.cutRaw = raw; m.erode = 1; m.cutImg = await refineAlpha(raw, 1); m.img = m.cutImg; m.cut = true;
+    if(st.bg === "#ffffff") toast("背景を消しました。「背景」から色や柄を選べます");
   }catch(err){
     toast("背景を消せませんでした。別の写真か、時間をおいてお試しください");
   }
   cutting = false; draw(); renderPanel();
 }
+let erTimer = null;
+function setErode(v){
+  const m = curM(); if(!m.cutRaw) return; m.erode = v; clearTimeout(erTimer);
+  erTimer = setTimeout(async () => { m.cutImg = await refineAlpha(m.cutRaw, v); if(m.cut) m.img = m.cutImg; draw(); }, 220);
+}
+// ケースの真上の「背景を消す」ボタン
+function updateQuick(){
+  const q = document.getElementById("cutQuick"); if(!q) return;
+  const p = cur(); q.hidden = !p; if(!p) return;
+  const m = curM(); q.textContent = cutting ? "切り抜き中…" : (m.cut ? "✂ 背景を戻す" : "✂ 背景を消す"); q.disabled = cutting; q.classList.toggle("on", !!m.cut);
+}
+document.getElementById("cutQuick").onclick = () => { const m = curM(); if(m.cut){ m.img = m.orig; m.cut = false; draw(); renderPanel(); } else removeBg(); };
 
 /* ===== 道具パネル ===== */
 function fitStage(){
@@ -504,10 +579,10 @@ function fitStage(){
 }
 window.addEventListener("resize", fitStage); try{ new ResizeObserver(fitStage).observe(cv.parentElement); new ResizeObserver(fitStage).observe(document.getElementById("panel")); }catch(_){}
 window.addEventListener("resize", fitStage); window.addEventListener("orientationchange", () => setTimeout(fitStage, 200));
-function closeSheet(){ tool = "photo"; document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", x.dataset.tool === "photo")); renderPanel(); }
+function closeSheet(){ tool = ""; document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", "false")); renderPanel(); }
 let tool = PR.id === "memorial" ? "tmpl" : "photo";
 setTimeout(() => document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", x.dataset.tool === tool)), 0);
-document.querySelectorAll(".rail button").forEach(b => b.onclick = () => { if(window.innerWidth <= 820 && tool === b.dataset.tool && (tool === "tmpl" || tool === "bg")) tool = "photo"; else tool = b.dataset.tool; document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", x.dataset.tool === tool)); renderPanel(); });
+document.querySelectorAll(".rail button").forEach(b => b.onclick = () => { if(window.innerWidth <= 820 && tool === b.dataset.tool) tool = ""; else tool = b.dataset.tool; document.querySelectorAll(".rail button").forEach(x => x.setAttribute("aria-pressed", x.dataset.tool === tool)); renderPanel(); });
 const panel = document.getElementById("panel");
 const fontOpts = id => P.fonts.map(f => `<option value="${f.id}" ${f.id === id ? "selected" : ""} style="font-family:${f.family.replace(/"/g, "")};font-weight:${f.weight || 400}">${esc(f.label)}</option>`).join("");
 // 背景色：白〜黒8色＋ナチュラル8色＋14色相×6段階＝100色
@@ -647,7 +722,7 @@ function drawSlot(c, s){
   const sl = pendingSlot, W = sl.d * PW * s, H = (sl.shape === "rect" ? sl.d * (sl.ar || 1) * PW : sl.d * PW) * s;
   c.save(); c.translate(sl.x * PW * s, sl.y * PH * s); frameShape(c, sl.shape === "rect" ? "round" : sl.shape, W, H);
   c.fillStyle = "rgba(255,255,255,.55)"; c.fill(); c.setLineDash([8, 6]); c.lineWidth = 2; c.strokeStyle = "#1f8fff"; c.stroke(); c.setLineDash([]);
-  c.fillStyle = "#555"; c.font = "bold 15px 'Noto Sans JP'"; c.textAlign = "center"; c.fillText("ここに写真が入ります", 0, -6); c.font = "13px 'Noto Sans JP'"; c.fillText("左の「写真」から入れてください", 0, 16); c.restore();
+  c.fillStyle = "#555"; c.font = "bold 15px 'Noto Sans JP'"; c.textAlign = "center"; c.fillText("ここに写真が入ります", 0, -6); c.font = "13px 'Noto Sans JP'"; c.fillText((window.innerWidth <= 820 ? "下の" : "左の") + "「写真」から入れてください", 0, 16); c.restore();
 }
 function applyTemplate(t0){
   const t = Object.assign({}, t0, layoutFor(t0)); push(); st.bg = t.bg;
@@ -673,10 +748,14 @@ function tmplThumb(t0){
 function renderPanel(){
   panel.dataset.tool = tool;
   setTimeout(fitStage, 0);
+  updateQuick();
+  if(tool === ""){ panel.innerHTML = ""; return; }
   setTimeout(() => { const sc = panel.querySelector("#sheetClose"); if(sc) sc.onclick = closeSheet; }, 0);
   if(tool === "photo"){
     const p = sel === "photo" ? cur() : null, m = curM(), idx = p ? st.photos.indexOf(p) : -1;
-    panel.innerHTML = `<h2>写真・データ</h2>
+    panel.innerHTML = `<div class="sheet-head"><h2>写真を選ぶ・整える</h2><button type="button" id="sheetClose">閉じる</button></div><h2 class="d-only">写真・データ</h2>
+      ${p ? `<div class="cut-hero">${m.cut ? `<button class="cut-main on" type="button" id="uncut">✂ 切り抜き済み（タップで元に戻す）</button>` : `<button class="cut-main" type="button" id="cut" ${cutting ? "disabled" : ""}>${cutting ? "背景を消しています…" : "✂ 背景を消して切り抜く"}</button>`}<p class="help" id="cutState">${m.cut ? "背景を消しました。ふちに白いもやが残るときは、下の「ふちの調整」を右へ。" : "ペットや人だけを切り抜きます。はじめては、準備に30秒〜1分ほどかかります。"}</p>
+        ${m.cut ? `<div class="row"><label for="cutEr">ふちの調整（右へ＝内側へけずる）</label><input type="range" id="cutEr" min="0" max="4" value="${m.erode || 0}"></div>` : ""}</div>` : ""}
       ${st.photos.length >= MAX_PHOTOS ? `<p class="help" style="border:1px dashed var(--line);padding:14px;text-align:center">写真は${MAX_PHOTOS}枚まで入っています。入れ替えるときは、写真を選んで「この写真を消す」を押してください。</p>` : ""}
       <label class="tile" ${st.photos.length >= MAX_PHOTOS ? "hidden" : ""}><input type="file" id="file" accept="image/*"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg>${st.photos.length ? "写真を追加する（重ねる）" : "写真をえらぶ"}</label>
       ${st.photos.length ? "" : `<button class="btn btn-line" type="button" id="trySample" style="width:100%;margin-top:8px">見本の写真で試してみる</button><p class="help" style="font-size:12px">手もとに写真がなくても、見本の写真で仕上がりを試せます。あとで「この写真を消す」で入れ替えられます。</p>`}
@@ -694,9 +773,6 @@ function renderPanel(){
         <div class="swatch" id="bc">${["#ffffff", "#1b1b1b", "#c9a24a", "#f4b6c2", "#e58fa8", "#d7263d", "#f4c430", "#8fd1c7", "#5bb8e6", "#8a5cc2", "#7a5c43"].map(h => `<button type="button" data-bc="${h}" aria-pressed="${p.border.color === h}" style="background:${h}" aria-label="ふちどりの色 ${h}"></button>`).join("")}</div>
         <input type="color" id="bcFree" class="free" value="${p.border.color}" aria-label="ふちどりの色を自由に選ぶ">` : ""}</div>
       ${st.photos.length > 1 ? `<div class="btns"><button type="button" id="up" ${idx === st.photos.length - 1 ? "disabled" : ""}>ひとつ上へ</button><button type="button" id="down" ${idx === 0 ? "disabled" : ""}>ひとつ下へ</button></div>` : ""}
-      <div class="row"><label>背景透過</label>
-        <div class="btns">${m.cut ? `<button type="button" id="uncut">背景を元に戻す</button>` : `<button type="button" id="cut" ${cutting ? "disabled" : ""}>${cutting ? "背景を消しています…" : "背景を消す（透過）"}</button>`}</div>
-        <p class="help" id="cutState">${m.cut ? "背景を消しました。下の写真や背景色が見えるようになります。" : "ペットや人だけを切り抜きます。重ねるときは、上の写真の背景を消すときれいに重なります。はじめて使うときは準備に30秒〜1分ほどかかります。"}</p></div>
       <div class="btns"><button type="button" id="pdel" class="danger">この写真を消す</button></div>
       <p class="help">写真は指やマウスで動かせます。スマホは2本指で拡大・回転できます。重なっている写真は、画面で押すか、上の一覧から選べます。</p>`
       : `<p class="help">写真はこの画面で送信します（あとから送ることはできません）。明るく、ピントの合った写真がきれいに仕上がります。</p>`}`;
@@ -723,11 +799,12 @@ function renderPanel(){
       const cb = panel.querySelector("#cut"), ub = panel.querySelector("#uncut");
       if(cb) cb.onclick = removeBg;
       if(ub) ub.onclick = () => { m.img = m.orig; m.cut = false; draw(); renderPanel(); };
+      const er = panel.querySelector("#cutEr"); if(er) er.oninput = () => setErode(+er.value);
       panel.querySelector("#pdel").onclick = () => { push(); st.photos.splice(st.photos.indexOf(p), 1); const top = st.photos[st.photos.length - 1]; selP = top ? top.id : null; sel = top ? "photo" : null; draw(); renderPanel(); };
     }
   } else if(tool === "text"){
     const t = typeof sel === "number" && st.texts[sel] && !st.texts[sel].stk ? st.texts[sel] : null;
-    panel.innerHTML = `<h2>テキスト</h2>
+    panel.innerHTML = `<div class="sheet-head"><h2>文字を入れる</h2><button type="button" id="sheetClose">閉じる</button></div><h2 class="d-only">テキスト</h2>
       <button class="tile" type="button" id="addT"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 6h14M12 6v13M9 19h6"/></svg>文字を追加する</button>
       ${t ? `<div class="row"><label for="tx">文字（全角10文字まで）</label><input type="text" id="tx" maxlength="20" value="${esc(t.text)}"></div>
       <div class="row"><label for="tf">書体</label><select id="tf">${fontOpts(t.font)}</select></div>
@@ -760,7 +837,7 @@ function renderPanel(){
     }
   } else if(tool === "deco"){
     const t = typeof sel === "number" && st.texts[sel] && st.texts[sel].stk ? st.texts[sel] : null, d = t ? STICKERS.find(x => x.id === t.stk) : null;
-    panel.innerHTML = `<h2>スタンプ</h2><p class="help">押すと真ん中に追加されます。指やマウスで好きな場所へ動かせます（${MAX_STK}個まで）。</p>
+    panel.innerHTML = `<div class="sheet-head"><h2>スタンプ</h2><button type="button" id="sheetClose">閉じる</button></div><h2 class="d-only">スタンプ</h2><p class="help">押すと真ん中に追加されます。指やマウスで好きな場所へ動かせます（${MAX_STK}個まで）。</p>
       <div class="swatch bg100" id="stks" style="grid-template-columns:repeat(6,1fr)">${STICKERS.map(x => `<button type="button" data-stk="${x.id}" style="border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;padding:0" aria-label="スタンプ">${x.emoji ? x.emoji : `<img src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(stickerSvg(x.id, x.c))}" alt="" style="width:80%;height:80%">`}</button>`).join("")}</div>
       ${t ? `<h2 style="font-size:13px;margin-top:6px">選んでいるスタンプ</h2>
       <div class="row"><label for="ks">大きさ</label><input type="range" id="ks" min="40" max="700" value="${t.size}"></div>

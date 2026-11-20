@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/shop.css?v=1121c">
+<link rel="stylesheet" href="css/shop.css?v=1121f">
 <style>
 .p-main-img img{width:100%;height:100%;object-fit:cover}
 .points{list-style:none;display:flex;flex-direction:column;gap:8px;font-size:14px}
@@ -179,6 +179,39 @@
     if(P.kind === "variant") return `<div class="vars" id="vars">${P.variants.map(v => `<button type="button" data-v="${v.id}" aria-pressed="${v.id === opt}"><b>${esc(v.label)}　${yen(v.price)}</b>${esc(v.desc || "")}</button>`).join("")}</div>`;
     return "";
   }
+  // ===== スマホケース：色 → 機種 → 確認 を、ポップアップで順に選ぶ =====
+  const ccSw = (c, cls) => `<span class="cc-sw ${cls || ""} ${c && c.hex === "clear" ? "clear" : ""}" style="${c && c.hex !== "clear" ? "background:" + c.hex : ""}"></span>`;
+  const curCC = () => (P.caseColors || []).find(c => c.id === cc) || null;
+  function openColor(){
+    $("#sheetHost").innerHTML = `<div class="sheet-bg" id="bg"><div class="sheet" role="dialog" aria-label="ハードケースの色を選ぶ">
+      <div class="sheet-h"><h2>① ハードケースの色を選ぶ</h2><button type="button" id="close" aria-label="閉じる">×</button></div>
+      <p class="help" style="font-size:13px;color:var(--sub)">写真を置かない部分に見える、ケースの色です。</p>
+      <div class="cc-cards">${P.caseColors.map(c => `<button type="button" class="cc-card" data-cc="${c.id}" aria-pressed="${c.id === cc}">${ccSw(c)}<b>${esc(c.label)}</b></button>`).join("")}</div>
+      <p class="help" style="font-size:12px;color:var(--sub);text-align:center">色をタップすると、次に機種を選びます。</p></div></div>`;
+    $("#close").onclick = () => $("#sheetHost").innerHTML = "";
+    $("#bg").onclick = e => { if(e.target.id === "bg") $("#sheetHost").innerHTML = ""; };
+    $("#sheetHost").querySelectorAll(".cc-card").forEach(b => b.onclick = () => { cc = b.dataset.cc; openModel(); });
+  }
+  function phoneChooser(){
+    return `<input type="search" class="msearch" id="msearch" placeholder="機種名で探す（例：iPhone 16、Galaxy S24、SO-51E）" value="${esc(word)}">
+      <div class="tabs" id="tabs">${M.groups.map((g, i) => `<button type="button" data-t="${i}" aria-pressed="${!word && i === tab}">${esc(g.label)}</button>`).join("")}</div>
+      <div class="mlist" id="models">${modelList()}</div>`;
+  }
+  function openModel(){
+    $("#sheetHost").innerHTML = `<div class="sheet-bg" id="bg"><div class="sheet" role="dialog" aria-label="スマホの機種を選ぶ">
+      <div class="sheet-h"><h2>② スマホの機種を選ぶ</h2><button type="button" id="close" aria-label="閉じる">×</button></div>
+      <div class="cc-now">${ccSw(curCC(), "sm")}<span>ハードケース：<b>${esc(ccLabel())}</b></span><button type="button" id="backColor">色を選び直す</button></div>
+      <div id="chooser">${phoneChooser()}</div></div></div>`;
+    const bind = () => {
+      const ms = $("#msearch"); if(ms){ ms.oninput = () => { word = ms.value.trim(); $("#models").innerHTML = modelList(); document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-pressed", !word && +b.dataset.t === tab)); }; }
+      const tb = $("#tabs"); if(tb) tb.onclick = e => { const b = e.target.closest("button"); if(!b) return; tab = +b.dataset.t; word = ""; $("#chooser").innerHTML = phoneChooser(); bind(); };
+    };
+    bind();
+    $("#chooser").onclick = e => { const b = e.target.closest("button[data-m]"); if(!b) return; opt = b.dataset.m; showConfirm(); };
+    $("#backColor").onclick = openColor;
+    $("#close").onclick = () => $("#sheetHost").innerHTML = "";
+    $("#bg").onclick = e => { if(e.target.id === "bg") $("#sheetHost").innerHTML = ""; };
+  }
   // 機種を選んだら、確認のポップアップ（デザインへ進む／選び直す）
   function showConfirm(){
     const host = document.getElementById("popHost") || (() => { const h = document.createElement("div"); h.id = "popHost"; document.body.appendChild(h); return h; })();
@@ -188,15 +221,17 @@
         <p class="pop-k">${P.kind === "none" ? "ご注文の内容" : "選んだ" + esc(P.optionLabel || "内容")}</p>
         <div class="pop-ic">${P.kind === "none" ? `<img src="${esc((P.images || [])[0] || "")}" alt="" style="width:92px;height:92px;object-fit:cover;border-radius:10px">` : shapeIcon(P.kind === "phone" ? "phone" : P.id, opt, 84, cc)}</div>
         <h3>${esc(P.kind === "none" ? P.short : opt)}</h3>
-        ${cc ? `<p class="pop-s">ケースの色：${esc(ccLabel())}</p>` : ""}
+        ${cc ? `<div class="pop-cc">${ccSw(curCC(), "sm")}<span>ハードケース：<b>${esc(ccLabel())}</b></span></div>` : ""}
         <div class="pop-q"><span>数量</span><button type="button" id="pqm" aria-label="1つ減らす">−</button><b id="pqn">${qty}</b><button type="button" id="pqp" aria-label="1つ増やす">＋</button></div>
         <p class="pop-t">合計（税込）<b>${yen(unit() * qty)}</b></p>
         <p class="pop-w">ご注文後は、内容（写真・文字・機種・色・数量）を変更できません。</p>
         <button class="big-btn" type="button" id="pgo">この${P.kind === "none" ? "内容" : esc(P.optionLabel || "内容")}でデザインに進む</button>
         <button class="pop-re" type="button" id="pre">${P.kind === "none" ? "閉じる" : esc(P.optionLabel || "内容") + "を選び直す"}</button>
+        ${P.kind === "phone" ? `<button class="pop-re" type="button" id="pcc">ケースの色を選び直す</button>` : ""}
       </div></div>`;
       document.getElementById("pgo").onclick = go;
       document.getElementById("pre").onclick = () => { host.innerHTML = ""; };
+      const pcc = document.getElementById("pcc"); if(pcc) pcc.onclick = () => { host.innerHTML = ""; openColor(); };
       document.getElementById("popbg").onclick = e => { if(e.target.id === "popbg") host.innerHTML = ""; };
       document.getElementById("pqm").onclick = () => { qty = Math.max(1, qty - 1); const q = $("#q"); if(q) q.value = qty; upd2(); draw(); };
       document.getElementById("pqp").onclick = () => { qty = Math.min(20, qty + 1); const q = $("#q"); if(q) q.value = qty; upd2(); draw(); };
@@ -205,7 +240,8 @@
     draw();
   }
   function open(){
-    if(P.kind === "none"){ showConfirm(); return; }   // 機種のない商品は、数量の確認ポップアップをそのまま出す
+    if(P.kind === "none"){ showConfirm(); return; }
+    if(P.kind === "phone"){ openColor(); return; }   // 色 → 機種 → 確認 の順に、ポップアップで選ぶ   // 機種のない商品は、数量の確認ポップアップをそのまま出す
     $("#sheetHost").innerHTML = `<div class="sheet-bg" id="bg"><div class="sheet" role="dialog" aria-label="${esc(P.optionLabel || "数量")}の選択">
       <div class="sheet-h"><h2>${P.optionLabel ? esc(P.optionLabel) + "・" : ""}数量の選択</h2><button type="button" id="close" aria-label="閉じる">×</button></div>
       <div id="chooser">${chooser()}</div>
