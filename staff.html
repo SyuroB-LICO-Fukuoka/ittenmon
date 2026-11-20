@@ -299,7 +299,7 @@ html,body{overflow-x:hidden}
 <div id="root"></div>
 <div id="layer"></div>
 <div id="toast"></div>
-<script src="js/config.js?v=1107d"></script>
+<script src="js/config.js?v=1120a"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script>
 "use strict";
@@ -886,7 +886,7 @@ let demoDB = null;
 function demoInit(){
   const cafes = Object.assign({}, S.CAFES||{}, { minato:"みなとベーカリー", nishi:"西新コーヒースタンド" }); S.CAFES = cafes;
   const names = ["佐藤 美咲","田中 健","鈴木 陽菜","高橋 蓮","伊藤 結衣","渡辺 大和","山本 さくら","中村 湊","小林 芽依","加藤 颯","吉田 心春","山田 悠真","松本 葵","井上 陸","木村 凛","林 楓","清水 樹","山口 美月"];
-  const items = ["スマホケース iPhone 15（白）×1","スマホケース iPhone 16 Pro（透明）×1","メタル名刺入れ 3D ×1","インテリアボード ×1","スマホケース Galaxy S24（黒）×2","メタル名刺入れ 2D ×1"];
+  const items = ["スマホケース iPhone 15（白）×1","スマホケース iPhone 16 Pro（透明）×1","ペットのメモリアルボード ×1","スマホケース iPhone 14（白）×1","スマホケース Galaxy S24（黒）×2","ペットのメモリアルボード ×2"];
   const sts = ["製造待ち","製造待ち","製作中","検品・梱包","お渡し・発送待ち","お渡し・発送待ち","入金待ち","入金待ち","完了","完了","完了","決済待ち","製作中","製造待ち","お渡し・発送待ち","完了","入金待ち","キャンセル"];
   const ids = Object.keys(cafes), now = Date.now();
   const orders = names.map((n,i)=>{ const cafe = i%4===0 ? "" : ids[i%ids.length]; const t = now - (i*19+3)*36e5; const st = sts[i]; const amount = [5500,5500,5500,4400,11000,4400][i%6];

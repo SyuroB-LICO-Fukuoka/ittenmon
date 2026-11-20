@@ -83,25 +83,12 @@ window.LICO_SHOP = {
       note: "ケースの形とカメラの位置は目安です。印刷はカメラの穴をよけて仕上げます。"
     },
     {
-      id: "cardcase", kind: "variant", series: "CARD CASE SERIES",
-      name: "写真でつくるメタル名刺入れ", short: "名刺入れ", price: 4400,
-      lead: "ステンレスの名刺入れに、好きな写真をプリント。\n名刺を渡すたびに話がはずむ、自分だけの名刺入れです。",
-      images: ["img/cardcase.jpg?v=1015e"], optionLabel: "仕上げ",
-      variants: [
-        { id: "2d", label: "2D（平面プリント）", price: 4400, desc: "写真をそのままきれいに印刷します" },
-        { id: "3d", label: "3D（立体プリント）", price: 5500, desc: "インクを重ねて盛り上げ、さわると凹凸のある仕上がりにします" }
-      ],
-      points: ["2D 4,400円／3D 5,500円（税込）", "ステンレス製", "名刺がおよそ20枚入ります"],
-      print: { w: 1122, h: 709, shape: "round", r: 24, base: "#c7c9cc", baseLabel: "ステンレスの地のまま（印刷しない）" },
-      note: "写真を置かない部分は、ステンレスの銀色のまま仕上がります。"
-    },
-    {
-      id: "interior", kind: "none", series: "INTERIOR SERIES",
-      name: "写真でつくるインテリアボード", short: "インテリアボード", price: 4400,
-      lead: "お部屋に飾れる、木のボードに写真をプリント。\n愛車やペット、家族の写真を、木目をいかしたやさしい風合いで仕上げます。",
-      images: ["img/interior.jpg?v=1015e"], optionLabel: "",
-      points: ["木製（持ち手と穴つきで、壁に掛けられます）", "木目がうっすら見える仕上がり", "プレゼントにもおすすめ"],
-      print: { w: 1200, h: 1960, shape: "board", base: "#ece6dc", baseLabel: "木の地のまま（印刷しない）" },
+      id: "memorial", kind: "none", series: "PET MEMORIAL SERIES",
+      name: "ペットのメモリアルボード", short: "ペットのメモリアル", price: 5500,
+      lead: "虹の橋をわたった、大切な家族の写真を、木のボードにのこします。\nテンプレートをえらんで、お名前やメッセージを入れるだけ。お部屋にそっと飾れます。",
+      images: ["img/memorial.jpg?v=1120a"], optionLabel: "",
+      points: ["木製のメモリアルボード（横10×縦15cm・立てかけて飾れます）", "メモリアル向けのテンプレートから選べます", "お名前・日付・メッセージを入れられます"],
+      print: { w: 1000, h: 1500, shape: "round", r: 40, base: "#ece6dc", baseLabel: "木の地のまま（印刷しない）" },
       note: "木目が透けて見えるため、写真は少し落ち着いた色合いになります。"
     }
   ]
