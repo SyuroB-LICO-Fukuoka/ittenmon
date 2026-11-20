@@ -71,7 +71,7 @@ window.LICO_SHOP = {
   PRODUCTS: [
     {
       id: "phone", kind: "phone", series: "PHOTO CASE SERIES",
-      name: "写真でつくるオリジナルスマホケース", short: "スマホケース", price: 5500,
+      name: "写真でつくるオリジナルスマホケース", short: "スマホケース", price: 4400,
       lead: "お気に入りの写真が、世界にひとつのスマホケースに。\niPhoneはもちろん、Galaxy・Xperia・AQUOS・Pixelなど600機種以上からお選びいただけます。",
       images: ["img/phonecase.jpg?v=1015e"], optionLabel: "機種",
       // ケースの色（ハードケース）。clear＝透明：写真を置かない部分は透けて見える
