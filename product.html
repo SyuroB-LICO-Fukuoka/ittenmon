@@ -85,7 +85,7 @@
 <div id="site-footer"></div>
 <div id="sheetHost"></div>
 
-<script src="js/config.js?v=1121c"></script>
+<script src="js/config.js?v=1121j"></script>
 <script src="js/models.js?v=1017a"></script>
 <script src="js/common.js?v=1121g"></script>
 <script src="js/chatbot.js?v=1121g" defer></script>
@@ -138,7 +138,7 @@
       <p class="p-lead">${esc(P.lead)}</p>
       ${P.size ? `<p class="size">サイズ：${esc(P.size)}</p>` : ""}
       <ul class="points">${(P.points || []).map(x => `<li>${esc(x)}</li>`).join("")}
-        <li>テンプレートと背景から選んで、写真・お名前・メッセージを入れられます</li><li>できあがりイメージを確認してから注文できます</li></ul>
+        <li>テンプレートと背景から選んで、写真・お名前・メッセージを入れられます</li><li><b>AIで作った柄・お手持ちの画像も、背景に入れられます</b></li><li>できあがりイメージを確認してから注文できます</li></ul>
       <button class="big-btn" type="button" id="startBtn">デザインする</button>
       <p class="ship-note">${esc(S.shipNote)}</p>
       ${P.note ? `<p class="size">${esc(P.note)}</p>` : ""}
