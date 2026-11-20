@@ -73,6 +73,10 @@ label.tile:active{transform:scale(.98)}
 #bgFree,.free{width:100%;height:40px;border:1px solid #d6d3cc;padding:2px;cursor:pointer}
 .layers{display:flex;flex-direction:column;gap:6px}
 .layers button{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);background:#fff;padding:9px 10px;font-size:13px;cursor:pointer;text-align:left}
+.lrow{display:flex;gap:6px}
+.lrow>button:first-child{flex:1}
+.lrow .mvb{flex:0 0 52px;justify-content:center;border-radius:10px;background:#1b1b1b;color:#fff;border-color:#1b1b1b;font-size:16px;font-weight:800}
+.lrow .mvb:disabled{opacity:.3}
 .layers button[aria-pressed="true"]{border-color:var(--text);background:#f7f6f3}
 .stage{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px;min-width:0;position:relative}
 .tools{display:flex;flex-wrap:wrap;gap:6px;align-self:stretch}
@@ -929,7 +933,7 @@ function renderPanel(){
       ${st.photos.length ? "" : `<button class="btn btn-line" type="button" id="trySample" style="width:100%;margin-top:8px">見本の写真で試してみる</button><p class="help" style="font-size:12px">手もとに写真がなくても、見本の写真で仕上がりを試せます。あとで「この写真を消す」で入れ替えられます。</p>`}
       <p class="help">AIで作った柄やイラストも、ここから入れられます。</p>
       <p class="help">写真は${MAX_PHOTOS}枚まで入れられます（いま${st.photos.length}枚）。入れた順に 写真①・②・③ になり、あとから入れた写真ほど上に重なります。</p>
-      ${st.photos.length > 1 ? `<p class="help" style="margin:0;font-weight:700">入れ替え・編集する写真を選ぶ</p><div class="layers">${st.photos.map((x, i) => `<button type="button" data-ph="${x.id}" aria-pressed="${p && x.id === p.id}">写真${NUM(i)}${i === st.photos.length - 1 ? "（いちばん上）" : i === 0 ? "（いちばん下）" : ""}<span>›</span></button>`).reverse().join("")}</div>` : ""}
+      ${st.photos.length > 1 ? `<p class="help" style="margin:0;font-weight:700">入れ替え・編集する写真を選ぶ</p><div class="layers">${st.photos.map((x, i) => `<div class="lrow"><button type="button" data-ph="${x.id}" aria-pressed="${p && x.id === p.id}">写真${NUM(i)}${i === st.photos.length - 1 ? "（いちばん上）" : i === 0 ? "（いちばん下）" : ""}</button><button type="button" class="mvb" data-mvp="${x.id}" data-d="1" aria-label="上へ" ${i === st.photos.length - 1 ? "disabled" : ""}>▲</button><button type="button" class="mvb" data-mvp="${x.id}" data-d="-1" aria-label="下へ" ${i === 0 ? "disabled" : ""}>▼</button></div>`).reverse().join("")}</div><p class="help" style="margin:0;font-size:12px">▲▼で、重なる順番（上下）を入れ替えられます。上にある写真ほど手前に見えます。</p>` : ""}
       ${p ? `<p class="state" id="photoState">${esc(photoStateText())}</p>
       <h2 style="font-size:13px">選んでいる写真：写真${idx + 1}</h2>
       <div class="row"><label for="sc">大きさ</label><input type="range" id="sc" min="5" max="400" value="${Math.round(p.scale * 100)}"></div>
@@ -958,6 +962,10 @@ function renderPanel(){
       panel.querySelector("#ctr").onclick = () => { push(); p.x = PW / 2; p.y = PH / 2; draw(); };
       panel.querySelector("#r90").onclick = () => { push(); p.rot = ((p.rot + 90 + 180) % 360) - 180; draw(); syncSliders(); };
       const mv = d => { push(); const i = st.photos.indexOf(p); st.photos.splice(i, 1); st.photos.splice(i + d, 0, p); draw(); renderPanel(); };
+      panel.querySelectorAll("[data-mvp]").forEach(b => b.onclick = () => {
+        const i = st.photos.findIndex(q => q.id === b.dataset.mvp), j = i + (+b.dataset.d); if(i < 0 || j < 0 || j >= st.photos.length) return;
+        push(); const t = st.photos[i]; st.photos[i] = st.photos[j]; st.photos[j] = t; selP = t.id; sel = "photo"; draw(); const sc = panel.scrollTop; renderPanel(); panel.scrollTop = sc;
+      });
       const ub2 = panel.querySelector("#up"), db = panel.querySelector("#down");
       if(ub2) ub2.onclick = () => mv(1);
       if(db) db.onclick = () => mv(-1);
